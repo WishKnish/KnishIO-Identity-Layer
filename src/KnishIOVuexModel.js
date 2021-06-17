@@ -1,8 +1,10 @@
-import KnishIOModel from 'src/libraries/models/KnishIOModel';
 import {getField as getFieldWrapper, updateField as setFieldWrapper, } from 'vuex-map-fields';
 
 
-export default class KnishIOVuexModel extends KnishIOModel {
+/**
+ *
+ */
+export default class KnishIOVuexModel {
 
 
   /**
@@ -17,18 +19,16 @@ export default class KnishIOVuexModel extends KnishIOModel {
 
     // Fill getters & mutations with base fields
     fields.forEach( ( field ) => {
-      if ( field !== 'secret' ) {
-        getters.push({
-          name: `get_${field}`.toUpperCase(), fn: (state) => {
-            return state[ field.toCamelCase() ];
-          },
-        });
-        mutations.push({
-          name: `set_${field}`.toUpperCase(), fn: (state, value) => {
-            state[field.toCamelCase()] = value;
-          },
-        });
-      }
+      getters.push({
+        name: `get_${field}`.toUpperCase(), fn: (state) => {
+          return state[ field.toCamelCase() ];
+        },
+      });
+      mutations.push({
+        name: `set_${field}`.toUpperCase(), fn: (state, value) => {
+          state[field.toCamelCase()] = value;
+        },
+      });
     } );
 
     // Add getters & mutations to the module
@@ -95,7 +95,6 @@ export default class KnishIOVuexModel extends KnishIOModel {
    * @param logging
    */
   constructor ( store, vuexFields, prefix, attributes = [], logging = false ) {
-    super();
 
     // Vuex store
     this.$__store = store;

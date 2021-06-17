@@ -1,12 +1,10 @@
 import { generateSecret, generateBundleHash, } from '@wishknish/knishio-client-js/src/libraries/crypto';
-import { KNISHIO_SETTINGS, } from 'src/constants/knishio';
-import KnishIOVuexModel from 'src/libraries/models/KnishIOVuexModel';
+import KnishIOVuexModel from './KnishIOVuexModel';
+import UserWallets from './UserWallets';
+
 import {connectionDB, deleteDataPromise, getDataPromise, setDataPromise,} from 'src/libraries/storageDB';
-import WalletBundle from 'src/libraries/models/WalletBundle';
-import Role from 'src/libraries/models/Role';
-import KnishIOModel from 'src/libraries/models/KnishIOModel';
 import { apolloClient, } from 'boot/apollo';
-import UserWallets from 'src/libraries/models/UserWallets';
+import { KNISHIO_SETTINGS, } from 'src/constants/knishio';
 // import { ACTIVE_WALLET_SUBSCRIPTION, WALLET_BALANCE_SUBSCRIPTION, } from 'src/constants/graphql/subscribtion/wallet';
 
 
@@ -15,7 +13,7 @@ import UserWallets from 'src/libraries/models/UserWallets';
 const db = connectionDB();
 
 
-export default class User extends KnishIOModel {
+export default class User {
 
   static _instance = null;
   static vuexModel = null;
@@ -33,6 +31,8 @@ export default class User extends KnishIOModel {
     'initialized',
 
     'user_data',
+
+
     'user_roles',
     'user_sessions',
   ];
@@ -134,8 +134,6 @@ export default class User extends KnishIOModel {
    * @param vm
    */
   constructor ( storage, client, vm ) {
-    super();
-
     this.$__storage = storage; // KnishIOVuexModel
     this.$__store = storage.$__store; // Vuex store
     this.$__client = client;
@@ -225,12 +223,20 @@ export default class User extends KnishIOModel {
       setTimeout( client => async function () {
         if ( typeof uriRefhash !== 'undefined' ) {
 
-          let userBundle = new WalletBundle( {} );
-          await userBundle.query( client, {
-            usernameHash: uriRefhash,
-          }, );
+          const result = await client.queryMeta( {
+            metaType: KNISHIO_SETTINGS.types.walletBundle,
+            filter: [
+              {
+                key: 'usernameHash',
+                value: usernameHash,
+                comparison: '=',
+              },
+            ],
+            latest: true,
+            latestMetas: true,
+          } );
 
-          if ( userBundle.id ) {
+          if ( result.instances && result.instances.length > 0 ) {
             await setDataPromise( db, 'refhash', uriRefhash );
           }
         }

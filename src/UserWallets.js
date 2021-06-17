@@ -1,12 +1,11 @@
-import KnishIOModel from 'src/libraries/models/KnishIOModel';
-import KnishIOVuexModel from 'src/libraries/models/KnishIOVuexModel';
+import KnishIOVuexModel from './KnishIOVuexModel';
 import { Wallet, } from '@wishknish/knishio-client-js';
 
 
 /**
  *
  */
-export default class UserWallets extends KnishIOModel {
+export default class UserWallets {
 
   static vuexModel = null;
 
@@ -54,8 +53,6 @@ export default class UserWallets extends KnishIOModel {
    * @param vm
    */
   constructor ( storage, vm ) {
-    super();
-
     this.$__storage = storage; // KnishIOVuexModel
     this.$__store = storage.$__store; // Vuex store
     this.$__vm = vm;
