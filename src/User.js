@@ -1,16 +1,13 @@
 import { generateSecret, generateBundleHash, } from '@wishknish/knishio-client-js/src/libraries/crypto';
+import storageDB from "./libraries/storageDB";
 import KnishIOVuexModel from './KnishIOVuexModel';
 import UserWallets from './UserWallets';
 
-import {connectionDB, deleteDataPromise, getDataPromise, setDataPromise,} from 'src/libraries/storageDB';
-import { apolloClient, } from 'boot/apollo';
-import { KNISHIO_SETTINGS, } from 'src/constants/knishio';
-// import { ACTIVE_WALLET_SUBSCRIPTION, WALLET_BALANCE_SUBSCRIPTION, } from 'src/constants/graphql/subscribtion/wallet';
 
 
 
 // Declaring indexedDB database
-const db = connectionDB();
+const db = new storageDB();
 
 
 export default class User {
@@ -31,10 +28,6 @@ export default class User {
     'initialized',
 
     'user_data',
-
-
-    'user_roles',
-    'user_sessions',
   ];
 
   static defaultState = {
@@ -69,37 +62,37 @@ export default class User {
 
     let getters = [
       { name: 'GET_SECRET', fn: async ( state ) => {
-        return state.secret ? state.secret : getDataPromise( db, 'secret' );
+        return state.secret ? state.secret : db.getDataPromise( 'secret' );
       }, },
       { name: 'GET_USERNAME', fn: ( state ) => {
-        return state.username ? state.username : getDataPromise( db, 'username' );
+        return state.username ? state.username : db.getDataPromise('username' );
       }, },
       { name: 'GET_AUTH_TOKEN', fn: async ( state ) => {
         if ( state.authToken ) {
           return state.authToken;
         }
-        let authToken = await getDataPromise( db, 'authToken' );
+        let authToken = await db.getDataPromise( 'authToken' );
         return authToken ? JSON.parse( authToken ) : null;
       }, },
     ];
     let mutations = [
       { name: 'SET_SECRET', fn: async ( state, secret ) => {
         state.secret = secret;
-        await setDataPromise( db, 'secret', secret );
+        await db.setDataPromise( 'secret', secret );
       }, },
       { name: 'SET_USERNAME', fn: async ( state, username ) => {
         state.username = username;
-        await setDataPromise( db, 'username', username );
+        await db.setDataPromise( 'username', username );
       }, },
       { name: 'SET_AUTH_TOKEN', fn: async ( state, authToken ) => {
         state.authToken = authToken;
-        await setDataPromise( db, 'authToken', JSON.stringify(authToken) );
+        await db.setDataPromise( 'authToken', JSON.stringify(authToken) );
       }, },
 
       { name: 'RESET_STATE', fn: async ( state, defaultState ) => {
           console.log( 'User::resetState() - Mutating user state...' );
-          await deleteDataPromise( db, 'username' );
-          await deleteDataPromise( db, 'secret' );
+          await db.deleteDataPromise( 'username' );
+          await db.deleteDataPromise( 'secret' );
           Object.assign( state, defaultState );
       }, },
     ];
@@ -129,15 +122,18 @@ export default class User {
 
   /**
    *
-   * @param storage instance of KnishIOVuexModel
+   * @param storage
    * @param client
    * @param vm
+   * @param salt
    */
-  constructor ( storage, client, vm ) {
+  constructor ( storage, client, vm, salt ) {
     this.$__storage = storage; // KnishIOVuexModel
     this.$__store = storage.$__store; // Vuex store
     this.$__client = client;
     this.$__vm = vm;
+
+    this.$__salt = salt;
 
     // Create a user wallets model to operate with user wallets (import / reset)
     this.wallets = new UserWallets( UserWallets.vuexModel, vm );
@@ -209,62 +205,6 @@ export default class User {
 
     await this.set( 'initialized', true );
     console.log( 'User::init() - Bootstrap complete...' );
-
-
-
-    // --- Set refhash
-    let refhash = await getDataPromise( db, 'refhash' );
-    let isLoggedIn = this.get( 'logged_in' );
-    if ( !refhash && !isLoggedIn ) {
-
-      let client = this.$__client;
-
-      // Get refhash param in setTimeout, because router in store not ready immediately
-      setTimeout( client => async function () {
-        if ( typeof uriRefhash !== 'undefined' ) {
-
-          const result = await client.queryMeta( {
-            metaType: KNISHIO_SETTINGS.types.walletBundle,
-            filter: [
-              {
-                key: 'usernameHash',
-                value: usernameHash,
-                comparison: '=',
-              },
-            ],
-            latest: true,
-            latestMetas: true,
-          } );
-
-          if ( result.instances && result.instances.length > 0 ) {
-            await setDataPromise( db, 'refhash', uriRefhash );
-          }
-        }
-      }, 3000 );
-    }
-    else if ( refhash && isLoggedIn ) {
-      await deleteDataPromise( db, 'refhash' );
-    }
-
-    // --- Set user roles
-    if ( isLoggedIn ) {
-      console.log( 'User::init() - Set user roles' );
-
-      let queryParams = {
-        bundleHash: this.$__client.getBundle(),
-        status: 'active',
-      };
-
-      let roles = await Role.query( this.$__client, queryParams );
-      if ( roles.instances.length > 0 ) {
-        await this.set( 'user_roles', roles.instances );
-      }
-    }
-    else {
-      await this.set( 'user_roles', {} );
-    }
-
-
   }
 
 
@@ -434,13 +374,13 @@ export default class User {
 
     console.log( 'User::login() - Starting login process...' );
 
-    if ( !KNISHIO_SETTINGS.salt ) {
+    if ( !this.$__salt ) {
       throw 'User::login() - Salt is required for secure hashing!';
     }
 
     // Starting new Knish.IO session
     if ( !secret ) {
-      secret = generateSecret( `${ username }:${ password }:${ KNISHIO_SETTINGS.salt }` );
+      secret = generateSecret( `${ username }:${ password }:${ this.$__salt }` );
     }
     const bundle = generateBundleHash( secret );
 
@@ -466,9 +406,9 @@ export default class User {
       await this.init( { newSecret: secret, username, } );
 
       // Delete refhash when user logged in
-      let refhash = await getDataPromise( db, 'refhash' );
+      let refhash = await db.getDataPromise( 'refhash' );
       if ( refhash ) {
-        await deleteDataPromise( db, 'refhash' );
+        await db.deleteDataPromise( 'refhash' );
       }
 
     } else {
@@ -491,12 +431,12 @@ export default class User {
 
     console.log( 'User::register() - Starting registration process...' );
 
-    if ( !KNISHIO_SETTINGS.salt ) {
+    if ( !this.$__salt ) {
       throw 'User::register() - Salt is required for secure hashing!';
     }
 
     // Starting new Knish.IO session
-    const newSecret = generateSecret( `${ username }:${ password }:${ KNISHIO_SETTINGS.salt }` );
+    const newSecret = generateSecret( `${ username }:${ password }:${ this.$__salt }` );
 
     // Get a bundle from the secret
     const bundle = generateBundleHash( newSecret );
@@ -560,9 +500,12 @@ export default class User {
 
   /**
    *
+   * @param apolloClient
+   * @param gqlQuery
+   * @param masterToken
    * @returns {Promise<void>}
    */
-  async subscribeWalletBalance () {
+  async subscribeWalletBalance ( apolloClient, gqlQuery, masterToken ) {
 
     console.log( 'User::update() - Subscribe wallet balance...' );
 
@@ -570,7 +513,7 @@ export default class User {
     // let wallets = await this.$__store.rootGetters[ 'wallet/GET_WALLETS' ]();
 
     for ( let token in wallets ) {
-      if ( token === KNISHIO_SETTINGS.masterToken ) {
+      if ( token === masterToken ) {
         continue;
       }
 
@@ -578,7 +521,7 @@ export default class User {
       let self = this;
 
       const observer = apolloClient.subscribe( {
-        query: WALLET_BALANCE_SUBSCRIPTION,
+        query: gqlQuery,
         variables: {
           'bundle': wallet.bundle,
           'token': wallet.token,
@@ -606,16 +549,19 @@ export default class User {
 
   /**
    *
+   * @param apolloClient
+   * @param gqlQuery
+   * @param masterToken
    * @returns {Promise<void>}
    */
-  async subscribeActiveWallet () {
+  async subscribeActiveWallet ( apolloClient, gqlQuery, masterToken ) {
 
     console.log( 'User::subscribeActiveWallet() - Subscribe active wallet...' );
 
     let wallets = await this.wallets.getWallets();
 
     for ( let token in wallets ) {
-      if ( token === KNISHIO_SETTINGS.masterToken ) {
+      if ( token === masterToken ) {
         continue;
       }
 
@@ -624,7 +570,7 @@ export default class User {
       // let vm = this.$__vm;
 
       const observer = apolloClient.subscribe( {
-        query: ACTIVE_WALLET_SUBSCRIPTION,
+        query: gqlQuery,
         variables: { 'bundle': wallet.bundle, },
         fetchPolicy: 'no-cache',
       } );
@@ -650,14 +596,5 @@ export default class User {
     }
   }
 
-
-  /**
-   * Reset user sessions
-   *
-   * @returns {Promise<void>}
-   */
-  async resetSessions() {
-    await this.set( 'user_sessions', {} );
-  }
 
 }
