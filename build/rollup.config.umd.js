@@ -5,7 +5,7 @@ import nodePolyfills from 'rollup-plugin-node-polyfills';
 
 const config = Object.assign( {}, base, {
   output: {
-    file: 'dist/client.umd.js',
+    file: 'dist/identity.umd.js',
     format: 'umd',
     name: 'KnishIO',
     globals: globals

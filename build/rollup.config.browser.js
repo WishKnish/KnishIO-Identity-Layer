@@ -5,7 +5,7 @@ import nodePolyfills from 'rollup-plugin-node-polyfills';
 
 const config = Object.assign( {}, base, {
   output: {
-    file: 'dist/client.min.js',
+    file: 'dist/identity.min.js',
     format: 'iife',
     name: 'KnishIO',
     globals: globals

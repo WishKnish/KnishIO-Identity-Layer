@@ -5,7 +5,7 @@ import { terser } from 'rollup-plugin-terser';
 
 const config = Object.assign( {}, base, {
   output: {
-    file: 'dist/client.cjs.js',
+    file: 'dist/identity.cjs.js',
     format: 'cjs',
     name: 'KnishIO',
     globals: globals

@@ -5,7 +5,7 @@ module.exports = ( env, argv ) => ({
   devtool: argv.mode === 'development' ? 'inline-source-map' : 'source-map',
   output: {
     path: path.resolve( __dirname, 'dist' ),
-    filename: argv.mode === 'development' ? 'KnishIOClientJSDev.js' : 'KnishIOClientJS.js'
+    filename: argv.mode === 'development' ? 'KnishIOIdentityJSDev.js' : 'KnishIOIdentityJS.js'
   },
   module: {
     rules: [

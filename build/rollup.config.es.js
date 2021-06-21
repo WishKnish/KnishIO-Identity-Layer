@@ -4,7 +4,7 @@ import { terser } from 'rollup-plugin-terser';
 
 const config = Object.assign( {}, base, {
   output: {
-    file: 'dist/client.esm.js',
+    file: 'dist/identity.esm.js',
     format: 'es',
     name: 'KnishIO',
     globals: globals
