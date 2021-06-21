@@ -7,16 +7,17 @@ import { Wallet, } from '@wishknish/knishio-client-js';
  */
 export default class UserWallets {
 
-  static vuexModel = null;
-
-  static vuexFields = [
-    'wallets',
-    'shadow_wallets',
-  ];
-
-  static defaultState = {
-    wallets: {},
-    shadowWallets: {},
+  static vuexFields() {
+    return [
+      'wallets',
+      'shadow_wallets',
+    ];
+  }
+  static defaultState() {
+    return {
+      wallets: {},
+      shadowWallets: {},
+    };
   };
 
 
@@ -40,10 +41,10 @@ export default class UserWallets {
 
 
     // Override state
-    KnishIOVuexModel.overrideState( module, UserWallets.defaultState );
+    KnishIOVuexModel.overrideState( module, UserWallets.defaultState() );
 
     // Fill all vuex data
-    return KnishIOVuexModel.fillVuexStorage( module, UserWallets.vuexFields, getters, mutations );
+    return KnishIOVuexModel.fillVuexStorage( module, UserWallets.vuexFields(), getters, mutations );
   }
 
 
@@ -111,7 +112,7 @@ export default class UserWallets {
     console.log( 'Wallet::reset() - Deleting wallet meta...' );
     console.log( this.$__store.getters );
 
-    this.$__store.commit( 'wallet/RESET_STATE', UserWallets.defaultState );
+    this.$__store.commit( 'wallet/RESET_STATE', UserWallets.defaultState() );
   }
 
 

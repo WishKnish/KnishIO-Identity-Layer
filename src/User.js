@@ -12,43 +12,45 @@ const db = new storageDB();
 
 export default class User {
 
-  // static _instance = null;
-  // static vuexModel = null;
 
-  static vuexFields = [
-    'secret',
-    'username',
-    'bundle',
-    'created_at',
-    'metas',
+  static vuexFields() {
+    return [
+      'secret',
+      'username',
+      'bundle',
+      'created_at',
+      'metas',
 
-    'auth_token',
-    'auth_timeout',
-    'logged_in',
-    'initialized',
+      'auth_token',
+      'auth_timeout',
+      'logged_in',
+      'initialized',
 
-    'user_data',
-  ];
+      'user_data',
+    ];
+  }
+  static defaultState() {
+    return {
+      secret: null,
+      username: null,
 
-  static defaultState = {
-    secret: null,
-    username: null,
+      bundle: null,
+      created_at: null,
+      metas: null,
 
-    bundle: null,
-    created_at: null,
-    metas: null,
+      userData: {},
 
-    userData: {},
+      loggedIn: false,
+      initialized: false,
 
-    loggedIn: false,
-    initialized: false,
+      authToken: '',
+      authTimeout: null,
 
-    authToken: '',
-    authTimeout: null,
-
-    userRoles: {},
-    userSessions: {},
+      userRoles: {},
+      userSessions: {},
+    }
   };
+
 
 
 
@@ -99,10 +101,10 @@ export default class User {
 
 
     // Override state
-    KnishIOVuexModel.overrideState( module, User.defaultState );
+    KnishIOVuexModel.overrideState( module, User.defaultState() );
 
     // Fill all vuex data
-    return KnishIOVuexModel.fillVuexStorage( module, User.vuexFields, getters, mutations );
+    return KnishIOVuexModel.fillVuexStorage( module, User.vuexFields(), getters, mutations );
   }
 
   /**
