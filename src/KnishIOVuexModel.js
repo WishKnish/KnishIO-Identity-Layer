@@ -195,12 +195,13 @@ export default class KnishIOVuexModel {
     if ( this.$__logging ) {
       console.log( `------- setVuex: ${this.$__prefix}/SET_${field.toUpperCase()} = ${value}` );
     }
-
-    // await this.$__store.commit( `${ this.$__prefix }/SET_${ field.toUpperCase() }`, value );
+    await this.$__store.commit( `${ this.$__prefix }/SET_${ field.toUpperCase() }`, value );
+    /*
     this.$__store.commit( `${this.$__prefix}/updateField`, {
       path: field.toCamelCase(),
       value: value,
     } );
+    */
   }
 
 

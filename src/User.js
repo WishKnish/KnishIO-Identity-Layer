@@ -45,9 +45,6 @@ export default class User {
 
       authToken: '',
       authTimeout: null,
-
-      userRoles: {},
-      userSessions: {},
     }
   };
 
@@ -115,9 +112,9 @@ export default class User {
    * @param vm
    * @returns {null}
    */
-  static instance( store, client, vm ) {
+  static instance( store, client, vm, salt ) {
     if ( !User._instance ) {
-      User._instance = new User( store, client, vm );
+      User._instance = new User( store, client, vm, salt );
     }
     return User._instance;
   }

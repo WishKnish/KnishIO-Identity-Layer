@@ -110,8 +110,7 @@ export default class UserWallets {
    */
   async reset () {
     console.log( 'Wallet::reset() - Deleting wallet meta...' );
-    console.log( this.$__store.getters );
-
+    
     this.$__store.commit( 'wallet/RESET_STATE', UserWallets.defaultState() );
   }
 
@@ -170,7 +169,7 @@ export default class UserWallets {
    */
   async setShadowWallet ( wallet ) {
     console.log( `Wallet::SET_WALLET_SHADOW - Setting ${ wallet.token } shadow wallet...` );
-    this.$__store.$set( this.$__store.state.shadowWallets, wallet.token, wallet );
+    this.$__vm.$set( this.$__store.state.wallet.shadowWallets, wallet.token, wallet );
   }
 
 
