@@ -2,6 +2,7 @@ import { generateSecret, generateBundleHash, } from '@wishknish/knishio-client-j
 import storageDB from "./libraries/storageDB";
 import KnishIOVuexModel from './KnishIOVuexModel';
 import UserWallets from './UserWallets';
+import ModelEventListener from '@wishknish/knishio-identity-layer/src/ModelEventListener';
 
 
 
@@ -134,6 +135,9 @@ export default class User {
 
     this.$__salt = salt;
 
+    // Create an empty event listener
+    this.$__listener = new ModelEventListener( true );
+
     // Create a user wallets model to operate with user wallets (import / reset)
     this.wallets = new UserWallets( UserWallets.vuexModel, vm );
   }
@@ -164,10 +168,9 @@ export default class User {
    * Init
    * @param newSecret
    * @param username
-   * @param uriRefhash
    * @returns {Promise<void>}
    */
-  async init( { newSecret = null, username = null, uriRefhash = null, } ) {
+  async init( { newSecret = null, username = null, } ) {
     console.log( 'User::init() - Beginning bootstrap procedure...' );
 
 
@@ -201,6 +204,9 @@ export default class User {
       console.warn( 'User::init() - User is not logged in...' );
 
     }
+
+    // On user init
+    await this.$__listener.on( 'init', this, db );
 
     await this.set( 'initialized', true );
     console.log( 'User::init() - Bootstrap complete...' );
@@ -404,11 +410,8 @@ export default class User {
       console.log( 'User::login() - Logging in...' );
       await this.init( { newSecret: secret, username, } );
 
-      // Delete refhash when user logged in
-      let refhash = await db.getDataPromise( 'refhash' );
-      if ( refhash ) {
-        await db.deleteDataPromise( 'refhash' );
-      }
+      // On login success
+      await this.$__listener.on( 'loginSuccess', this, db );
 
     } else {
 
@@ -483,7 +486,6 @@ export default class User {
     await this.set( 'secret', false );
     await this.set( 'username', false );
     await this.set( 'bundle', false );
-    await this.set( 'user_roles', {} );
 
     await this.set( 'auth_token', false );
 
