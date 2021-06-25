@@ -97,12 +97,8 @@ export default class User {
       }, },
     ];
 
-
-    // Override state
-    KnishIOVuexModel.overrideState( module, User.defaultState() );
-
     // Fill all vuex data
-    return KnishIOVuexModel.fillVuexStorage( module, User.vuexFields(), getters, mutations );
+    return KnishIOVuexModel.fillVuexStorage( module, 'user', User.vuexFields(), User.defaultState(), getters, mutations );
   }
 
   /**
@@ -327,8 +323,7 @@ export default class User {
     }
 
     // Auth token default initialization
-    let authToken = await this.$__storage.getVuex( 'auth_token' );
-    // await this.$__store.getters[ `${ this.$__prefix}/GET_AUTH_TOKEN` ];
+    let authToken = await this.$__store.getters[ `${ this.$__prefix}/GET_AUTH_TOKEN` ];
     console.log( `User::authorize() - Retrieving auth token ${ authToken ? authToken.token : 'NONE' }...` );
 
     // Try to get a new auth token
@@ -339,8 +334,7 @@ export default class User {
       console.log( `User::authorize() - Get a new auth token ${ authToken.token }...` );
 
       // Save authToken & set some refresh code
-      await this.$__storage.setVuex( 'auth_token', authToken );
-      // await this.$__store.commit( `${ this.$__prefix}/SET_AUTH_TOKEN`, authToken );
+      await this.set( 'auth_token', authToken );
     }
 
     // Set an auth token to the KnishIOClient

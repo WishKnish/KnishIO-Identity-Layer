@@ -40,11 +40,8 @@ export default class UserWallets {
     ];
 
 
-    // Override state
-    KnishIOVuexModel.overrideState( module, UserWallets.defaultState() );
-
     // Fill all vuex data
-    return KnishIOVuexModel.fillVuexStorage( module, UserWallets.vuexFields(), getters, mutations );
+    return KnishIOVuexModel.fillVuexStorage( module, 'wallet', UserWallets.vuexFields(), UserWallets.defaultState(), getters, mutations );
   }
 
 
@@ -110,7 +107,7 @@ export default class UserWallets {
    */
   async reset () {
     console.log( 'Wallet::reset() - Deleting wallet meta...' );
-    
+
     this.$__store.commit( 'wallet/RESET_STATE', UserWallets.defaultState() );
   }
 

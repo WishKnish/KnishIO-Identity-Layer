@@ -9,81 +9,59 @@ export default class KnishIOVuexModel {
 
   /**
    * Generate vuex getters & setters
-   * @param module
+   * @param object
    * @param fields
    * @param getters
    * @param mutations
    * @returns {*}
    */
-  static fillVuexStorage( module, fields, getters = [], mutations = [] ) {
+  static fillVuexStorage( object, prefix, fields, defaultState, getters = [], mutations = [] ) {
+
+    let withPrefix = ( key ) => {
+      return `${ prefix }/${ key }`;
+    };
 
     // Fill getters & mutations with base fields
     fields.forEach( ( field ) => {
-      getters.push({
-        name: `get_${field}`.toUpperCase(), fn: (state) => {
+      getters.push( {
+        name: `get_${ field }`.toUpperCase(), fn: ( state ) => {
           return state[ field.toCamelCase() ];
         },
-      });
-      mutations.push({
-        name: `set_${field}`.toUpperCase(), fn: (state, value) => {
-          state[field.toCamelCase()] = value;
+      } );
+      mutations.push( {
+        name: `set_${ field }`.toUpperCase(), fn: ( state, value ) => {
+          state[ field.toCamelCase() ] = value;
         },
-      });
+      } );
     } );
 
-    // Add getters & mutations to the module
+    // Add getters & mutations to the object
     getters.forEach( ( getter ) => {
-      if ( !module.getters.hasOwnProperty( getter.name ) ) {
+      if ( !object.getters.hasOwnProperty( withPrefix( getter.name ) ) ) {
         // console.log( `KnishIOVuexModel::fillVuexStorage ADD: ${ getter.name } => ${ getter.fn }` );
-        module.getters[ getter.name ] = getter.fn;
+        object.getters[ withPrefix( getter.name ) ] = getter.fn;
       }
     } );
     mutations.forEach( ( mutation ) => {
-      if ( !module.mutations.hasOwnProperty( mutation.name ) ) {
+      if ( !object.mutations.hasOwnProperty( withPrefix( mutation.name ) ) ) {
         // console.log( `KnishIOVuexModel::fillVuexStorage ADD: ${ mutation.name } => ${ mutation.fn }` );
-        module.mutations[ mutation.name ] = mutation.fn;
+        object.mutations[ withPrefix( mutation.name ) ] = mutation.fn;
       }
     } );
 
     // Add get/set field functions
-    module.getters[ 'getField' ] = getFieldWrapper;
-    module.mutations[ 'updateField' ] = setFieldWrapper;
-
-    return module;
-  }
-
-
-  /**
-   *
-   * @param module
-   * @param defaultState
-   */
-  static overrideState( module, defaultState ) {
-
-    // Generate new getters object without GET_DEFAULT_STATE
-    let newGetters = {};
-    for ( let i in module.getters ) {
-      if ( !Object.prototype.hasOwnProperty.call( module.getters, 'GET_DEFAULT_STATE' ) ) {
-        continue;
-      }
-      newGetters[ i ] = module.getters[ i ];
-    }
-    // Merge default state with the original data
-    if ( module.getters.GET_DEFAULT_STATE ) {
-      for ( let i in module.getters.GET_DEFAULT_STATE() ) {
-        defaultState[ i ] = module.getters.GET_DEFAULT_STATE()[ i ];
-      }
-    }
-
-    // Add new function & related getter to the new getters object
-    newGetters.GET_DEFAULT_STATE = () => {
-      return defaultState;
-    };
+    object.getters[ withPrefix( 'getField' ) ] = getFieldWrapper;
+    object.mutations[ withPrefix( 'updateField' ) ] = setFieldWrapper;
 
     // Override module.getters & state
-    module.getters = newGetters;
-    module.state = defaultState;
+    object.getters[ withPrefix( 'GET_DEFAULT_STATE' ) ] = () => {
+      return defaultState;
+    };
+    object.state[ prefix ] = defaultState;
+
+    return object;
   }
+
 
 
   /**
