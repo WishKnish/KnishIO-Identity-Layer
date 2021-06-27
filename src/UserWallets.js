@@ -1,5 +1,5 @@
 import KnishIOVuexModel from './KnishIOVuexModel';
-import { Wallet, } from '@wishknish/knishio-client-js';
+import { Wallet } from '@wishknish/knishio-client-js';
 
 
 /**
@@ -7,16 +7,17 @@ import { Wallet, } from '@wishknish/knishio-client-js';
  */
 export default class UserWallets {
 
-  static vuexFields() {
+  static vuexFields () {
     return [
       'wallets',
-      'shadow_wallets',
+      'shadow_wallets'
     ];
   }
-  static defaultState() {
+
+  static defaultState () {
     return {
       wallets: {},
-      shadowWallets: {},
+      shadowWallets: {}
     };
   };
 
@@ -27,16 +28,18 @@ export default class UserWallets {
    * @param module
    * @returns {*}
    */
-  static fillVuexStorage( module ) {
+  static fillVuexStorage ( module ) {
 
-    let getters = [
-    ];
+    let getters = [];
     let mutations = [
-      { name: 'RESET_STATE', fn: ( state, defaultState ) => {
-        Object.keys( defaultState ).forEach( key => {
-          state[ key ] = defaultState[ key ];
-        } );
-      }, },
+      {
+        name: 'RESET_STATE',
+        fn: ( state, defaultState ) => {
+          Object.keys( defaultState ).forEach( key => {
+            state[ key ] = defaultState[ key ];
+          } );
+        }
+      }
     ];
 
 
@@ -66,7 +69,7 @@ export default class UserWallets {
    * @param shadow
    * @returns {Promise<*|*>}
    */
-  async getWallets( tokenSlug = null, shadow = false ) {
+  async getWallets ( tokenSlug = null, shadow = false ) {
     let wallets = await this.$__storage.getVuex( shadow ? 'shadow_wallets' : 'wallets' );
     if ( !tokenSlug ) {
       return wallets;
@@ -80,7 +83,7 @@ export default class UserWallets {
    * @param tokenSlug
    * @returns {Promise<*>}
    */
-  async getShadowWallets( tokenSlug = null ) {
+  async getShadowWallets ( tokenSlug = null ) {
     return await this.getWallets( tokenSlug, true );
   }
 
@@ -92,11 +95,15 @@ export default class UserWallets {
    * @param position
    * @returns {Promise<void>}
    */
-  async init ( { secret, token, position = null, } ) {
+  async init ( {
+    secret,
+    token,
+    position = null
+  } ) {
     const wallet = new Wallet( {
       secret,
       token,
-      position,
+      position
     } );
 
     // Generating initial master wallet
@@ -134,8 +141,7 @@ export default class UserWallets {
       // Set wallet
       if ( wallet.address ) {
         this.setWallet( wallet );
-      }
-      else {
+      } else {
         this.setShadowWallet( wallet );
       }
 

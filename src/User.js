@@ -1,9 +1,10 @@
-import { generateSecret, generateBundleHash, } from '@wishknish/knishio-client-js/src/libraries/crypto';
-import storageDB from "./libraries/storageDB";
+import {
+  generateSecret,
+  generateBundleHash
+} from '@wishknish/knishio-client-js/src/libraries/crypto';
+import storageDB from './libraries/storageDB';
 import KnishIOVuexModel from './KnishIOVuexModel';
 import UserWallets from './UserWallets';
-
-
 
 
 // Declaring indexedDB database
@@ -13,7 +14,7 @@ const db = new storageDB();
 export default class User {
 
 
-  static vuexFields() {
+  static vuexFields () {
     return [
       'secret',
       'username',
@@ -26,10 +27,11 @@ export default class User {
       'logged_in',
       'initialized',
 
-      'user_data',
+      'user_data'
     ];
   }
-  static defaultState() {
+
+  static defaultState () {
     return {
       secret: null,
       username: null,
@@ -47,11 +49,9 @@ export default class User {
       authTimeout: null,
 
       userRoles: {},
-      userSessions: {},
-    }
+      userSessions: {}
+    };
   };
-
-
 
 
   /**
@@ -60,43 +60,64 @@ export default class User {
    * @param module
    * @returns {*}
    */
-  static fillVuexStorage( module ) {
+  static fillVuexStorage ( module ) {
 
     let getters = [
-      { name: 'GET_SECRET', fn: async ( state ) => {
-        return state.secret ? state.secret : db.getDataPromise( 'secret' );
-      }, },
-      { name: 'GET_USERNAME', fn: ( state ) => {
-        return state.username ? state.username : db.getDataPromise('username' );
-      }, },
-      { name: 'GET_AUTH_TOKEN', fn: async ( state ) => {
-        if ( state.authToken ) {
-          return state.authToken;
+      {
+        name: 'GET_SECRET',
+        fn: async ( state ) => {
+          return state.secret ? state.secret : db.getDataPromise( 'secret' );
         }
-        let authToken = await db.getDataPromise( 'authToken' );
-        return authToken ? JSON.parse( authToken ) : null;
-      }, },
+      },
+      {
+        name: 'GET_USERNAME',
+        fn: ( state ) => {
+          return state.username ? state.username : db.getDataPromise( 'username' );
+        }
+      },
+      {
+        name: 'GET_AUTH_TOKEN',
+        fn: async ( state ) => {
+          if ( state.authToken ) {
+            return state.authToken;
+          }
+          let authToken = await db.getDataPromise( 'authToken' );
+          return authToken ? JSON.parse( authToken ) : null;
+        }
+      }
     ];
     let mutations = [
-      { name: 'SET_SECRET', fn: async ( state, secret ) => {
-        state.secret = secret;
-        await db.setDataPromise( 'secret', secret );
-      }, },
-      { name: 'SET_USERNAME', fn: async ( state, username ) => {
-        state.username = username;
-        await db.setDataPromise( 'username', username );
-      }, },
-      { name: 'SET_AUTH_TOKEN', fn: async ( state, authToken ) => {
-        state.authToken = authToken;
-        await db.setDataPromise( 'authToken', JSON.stringify(authToken) );
-      }, },
+      {
+        name: 'SET_SECRET',
+        fn: async ( state, secret ) => {
+          state.secret = secret;
+          await db.setDataPromise( 'secret', secret );
+        }
+      },
+      {
+        name: 'SET_USERNAME',
+        fn: async ( state, username ) => {
+          state.username = username;
+          await db.setDataPromise( 'username', username );
+        }
+      },
+      {
+        name: 'SET_AUTH_TOKEN',
+        fn: async ( state, authToken ) => {
+          state.authToken = authToken;
+          await db.setDataPromise( 'authToken', JSON.stringify( authToken ) );
+        }
+      },
 
-      { name: 'RESET_STATE', fn: async ( state, defaultState ) => {
+      {
+        name: 'RESET_STATE',
+        fn: async ( state, defaultState ) => {
           console.log( 'User::resetState() - Mutating user state...' );
           await db.deleteDataPromise( 'username' );
           await db.deleteDataPromise( 'secret' );
           Object.assign( state, defaultState );
-      }, },
+        }
+      }
     ];
 
 
@@ -115,7 +136,7 @@ export default class User {
    * @param vm
    * @returns {null}
    */
-  static instance( store, client, vm ) {
+  static instance ( store, client, vm ) {
     if ( !User._instance ) {
       User._instance = new User( store, client, vm );
     }
@@ -148,7 +169,7 @@ export default class User {
    * @param value
    * @returns {Promise<void>}
    */
-  async set( field, value ) {
+  async set ( field, value ) {
     await this.$__storage.set( field, value );
   }
 
@@ -158,7 +179,7 @@ export default class User {
    * @param field
    * @returns {*}
    */
-  get( field ) {
+  get ( field ) {
     return this.$__storage.get( field );
   }
 
@@ -170,7 +191,11 @@ export default class User {
    * @param uriRefhash
    * @returns {Promise<void>}
    */
-  async init( { newSecret = null, username = null, uriRefhash = null, } ) {
+  async init ( {
+    newSecret = null,
+    username = null,
+    uriRefhash = null
+  } ) {
     console.log( 'User::init() - Beginning bootstrap procedure...' );
 
 
@@ -178,8 +203,7 @@ export default class User {
     let secret;
     if ( newSecret ) {
       secret = newSecret;
-    }
-    else {
+    } else {
       secret = await this.$__storage.getVuexAsync( 'secret' );
     }
     // !!! Set the secret for update a local state to set related computed up to date
@@ -191,7 +215,7 @@ export default class User {
     }
 
     // User authorization
-    await this.authorize( { newSecret, } );
+    await this.authorize( { newSecret } );
 
     // Has a secret on the client?
     if ( this.$__client.hasSecret() ) {
@@ -215,7 +239,7 @@ export default class User {
    *
    * @returns {Promise<void>}
    */
-  async restore() {
+  async restore () {
     console.log( 'User::restore() - Beginning remote restore...' );
 
     // Get a user's bundle
@@ -243,7 +267,7 @@ export default class User {
    *
    * @returns {Promise<void>}
    */
-  async restoreWallets() {
+  async restoreWallets () {
 
     // Importing recovered wallets
     console.log( 'User::restoreWallets() - Restoring remote wallets...' );
@@ -261,13 +285,13 @@ export default class User {
    * @param bundle
    * @returns {Promise<void>}
    */
-  async restoreData( bundle ) {
+  async restoreData ( bundle ) {
 
     // Init user data
     let data = {
       bundle: bundle.bundleHash,
       createdAt: Number( bundle.createdAt ),
-      metas: bundle.metas,
+      metas: bundle.metas
     };
 
     // Init old data to get a cover value
@@ -305,7 +329,7 @@ export default class User {
    * @param newSecret
    * @returns {Promise<void>}
    */
-  async authorize( { newSecret, }, ) {
+  async authorize ( { newSecret } ) {
 
     console.log( 'User::authorize() - Starting authorization process...' );
 
@@ -330,9 +354,9 @@ export default class User {
 
     // Try to get a new auth token
     if ( newSecret || !authToken || !authToken.expiresAt || authToken.expiresAt * 1000 < Date.now() ) {
-      authToken = await this.$__client.authorize({
-        secret,
-      });
+      authToken = await this.$__client.authorize( {
+        secret
+      } );
       console.log( `User::authorize() - Get a new auth token ${ authToken.token }...` );
 
       // Save authToken & set some refresh code
@@ -344,17 +368,16 @@ export default class User {
     this.$__client.setAuthToken( authToken );
 
 
-
     // Remove previous timeout for the auth token update
     let authTimeout = await this.get( 'auth_timeout' );
     clearTimeout( authTimeout );
 
     // Create a new auth token timeouts
-    console.log( `User::authorize() - Set auth timeout to ${ new Date(authToken.expiresAt * 1000) } ...` );
+    console.log( `User::authorize() - Set auth timeout to ${ new Date( authToken.expiresAt * 1000 ) } ...` );
     let self = this;
     authTimeout = setTimeout( self => {
       ( async self => {
-        await self.authorize( { newSecret, } );
+        await self.authorize( { newSecret } );
       } )( self );
     }, ( authToken.expiresAt * 1000 ) - Date.now(), self );
     // Save auth timeout
@@ -372,7 +395,11 @@ export default class User {
    * @param secret
    * @returns {Promise<void>}
    */
-  async login ( { username, password, secret, } ) {
+  async login ( {
+    username,
+    password,
+    secret
+  } ) {
 
     console.log( 'User::login() - Starting login process...' );
 
@@ -388,7 +415,7 @@ export default class User {
 
     // Attempting to retrieve user's metadata for the given secret
     const result = await this.$__client.queryBundle( {
-      bundle,
+      bundle
     } );
 
     if ( result ) {
@@ -405,7 +432,10 @@ export default class User {
     if ( result && result[ bundle ] && Object.keys( result[ bundle ].metas ).length > 0 ) {
 
       console.log( 'User::login() - Logging in...' );
-      await this.init( { newSecret: secret, username, } );
+      await this.init( {
+        newSecret: secret,
+        username
+      } );
 
       // Delete refhash when user logged in
       let refhash = await db.getDataPromise( 'refhash' );
@@ -429,7 +459,10 @@ export default class User {
    * @param password
    * @returns {Promise<void>}
    */
-  async register ( { username, password, } ) {
+  async register ( {
+    username,
+    password
+  } ) {
 
     console.log( 'User::register() - Starting registration process...' );
 
@@ -445,7 +478,7 @@ export default class User {
 
     // Attempting to retrieve user's metadata for the given secret
     const result = await this.$__client.queryBundle( {
-      bundle,
+      bundle
     } );
 
     if ( result ) {
@@ -467,7 +500,10 @@ export default class User {
     } else {
 
       console.log( 'User::register() - User not registered; Registration can proceed...' );
-      await this.init( { newSecret, username, } );
+      await this.init( {
+        newSecret,
+        username
+      } );
 
     }
   }
@@ -526,9 +562,9 @@ export default class User {
         query: gqlQuery,
         variables: {
           'bundle': wallet.bundle,
-          'token': wallet.token,
+          'token': wallet.token
         },
-        fetchPolicy: 'no-cache',
+        fetchPolicy: 'no-cache'
       } );
 
       observer.subscribe( {
@@ -543,7 +579,7 @@ export default class User {
         },
         error ( error ) {
           console.log( error );
-        },
+        }
       } );
     }
   }
@@ -573,8 +609,8 @@ export default class User {
 
       const observer = apolloClient.subscribe( {
         query: gqlQuery,
-        variables: { 'bundle': wallet.bundle, },
-        fetchPolicy: 'no-cache',
+        variables: { 'bundle': wallet.bundle },
+        fetchPolicy: 'no-cache'
       } );
 
       observer.subscribe( {
@@ -593,7 +629,7 @@ export default class User {
         },
         error ( error ) {
           console.log( error );
-        },
+        }
       } );
     }
   }

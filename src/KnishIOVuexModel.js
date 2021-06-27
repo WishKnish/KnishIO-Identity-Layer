@@ -1,4 +1,7 @@
-import {getField as getFieldWrapper, updateField as setFieldWrapper, } from 'vuex-map-fields';
+import {
+  getField as getFieldWrapper,
+  updateField as setFieldWrapper
+} from 'vuex-map-fields';
 
 
 /**
@@ -15,20 +18,22 @@ export default class KnishIOVuexModel {
    * @param mutations
    * @returns {*}
    */
-  static fillVuexStorage( module, fields, getters = [], mutations = [] ) {
+  static fillVuexStorage ( module, fields, getters = [], mutations = [] ) {
 
     // Fill getters & mutations with base fields
     fields.forEach( ( field ) => {
-      getters.push({
-        name: `get_${field}`.toUpperCase(), fn: (state) => {
+      getters.push( {
+        name: `get_${ field }`.toUpperCase(),
+        fn: ( state ) => {
           return state[ field.toCamelCase() ];
-        },
-      });
-      mutations.push({
-        name: `set_${field}`.toUpperCase(), fn: (state, value) => {
-          state[field.toCamelCase()] = value;
-        },
-      });
+        }
+      } );
+      mutations.push( {
+        name: `set_${ field }`.toUpperCase(),
+        fn: ( state, value ) => {
+          state[ field.toCamelCase() ] = value;
+        }
+      } );
     } );
 
     // Add getters & mutations to the module
@@ -58,7 +63,7 @@ export default class KnishIOVuexModel {
    * @param module
    * @param defaultState
    */
-  static overrideState( module, defaultState ) {
+  static overrideState ( module, defaultState ) {
 
     // Generate new getters object without GET_DEFAULT_STATE
     let newGetters = {};
@@ -115,7 +120,7 @@ export default class KnishIOVuexModel {
    *
    * @returns {*[]}
    */
-  attributes() {
+  attributes () {
     return this.$__attributes;
   }
 
@@ -124,7 +129,7 @@ export default class KnishIOVuexModel {
    *
    * @returns {{}}
    */
-  getComputed() {
+  getComputed () {
     let computed = {};
     this.$__vuexFields.concat( this.$__attributes ).forEach( ( field ) => {
       let computedField = this.$__vuexFields.includes( field ) ? field.toCamelCase() : field;
@@ -133,8 +138,8 @@ export default class KnishIOVuexModel {
           return this.get( field );
         },
         set: ( value ) => {
-          this.set( field, value );
-        },
+          return this.set( field, value );
+        }
       };
     } );
     return computed;
@@ -146,12 +151,12 @@ export default class KnishIOVuexModel {
    * @param key
    * @param value
    */
-  async setData( key, value ) {
+  async setData ( key, value ) {
     let fieldName = `${ this.$__prefix }_data`;
     let data = this.get( fieldName );
     data[ key ] = value;
     if ( this.$__logging ) {
-      console.log( `------- setAttribute ${ fieldName }: ${key} = ${value}` );
+      console.log( `------- setAttribute ${ fieldName }: ${ key } = ${ value }` );
     }
     await this.setVuex( fieldName, data );
   }
@@ -162,18 +167,18 @@ export default class KnishIOVuexModel {
    * @param key
    * @returns {Promise<void>}
    */
-  getData( key ) {
+  getData ( key ) {
     let fieldName = `${ this.$__prefix }_data`;
     let data = this.get( fieldName );
     if ( !data ) {
       if ( this.$__logging ) {
-        console.warn( ` ${this.constructor.name}.data is empty.` );
+        console.warn( ` ${ this.constructor.name }.data is empty.` );
       }
       return null;
     }
     if ( !data.hasOwnProperty( key ) ) {
       if ( this.$__logging ) {
-        console.error( ` ${this.constructor.name}.data[ ${key} ] does exists.` );
+        console.error( ` ${ this.constructor.name }.data[ ${ key } ] does exists.` );
       }
       return null;
     }
@@ -185,21 +190,20 @@ export default class KnishIOVuexModel {
   }
 
 
-
   /**
    * Set a value to vuex
    * @param field
    * @param value
    */
-  async setVuex( field, value ) {
+  async setVuex ( field, value ) {
     if ( this.$__logging ) {
-      console.log( `------- setVuex: ${this.$__prefix}/SET_${field.toUpperCase()} = ${value}` );
+      console.log( `------- setVuex: ${ this.$__prefix }/SET_${ field.toUpperCase() } = ${ value }` );
     }
 
     // await this.$__store.commit( `${ this.$__prefix }/SET_${ field.toUpperCase() }`, value );
-    this.$__store.commit( `${this.$__prefix}/updateField`, {
+    this.$__store.commit( `${ this.$__prefix }/updateField`, {
       path: field.toCamelCase(),
-      value: value,
+      value: value
     } );
   }
 
@@ -207,10 +211,10 @@ export default class KnishIOVuexModel {
   /**
    * Get a value from vuex
    */
-  getVuex( field ) {
+  getVuex ( field ) {
     let value = this.$__store.getters[ `${ this.$__prefix }/getField` ]( field.toCamelCase() );
     if ( this.$__logging ) {
-      console.log( `------- getVuex: ${this.$__prefix}/GET_${field.toUpperCase()} - ${value}` );
+      console.log( `------- getVuex: ${ this.$__prefix }/GET_${ field.toUpperCase() } - ${ value }` );
     }
     return value;
   }
@@ -222,10 +226,10 @@ export default class KnishIOVuexModel {
    * @param field
    * @returns {Promise<*>}
    */
-  async getVuexAsync( field ) {
+  async getVuexAsync ( field ) {
     let value = await this.$__store.getters[ `${ this.$__prefix }/GET_${ field.toUpperCase() }` ];
     if ( this.$__logging ) {
-      console.log( `------- getVuexAsync: ${this.$__prefix}/GET_${field.toUpperCase()} - ${value}` );
+      console.log( `------- getVuexAsync: ${ this.$__prefix }/GET_${ field.toUpperCase() } - ${ value }` );
     }
     return value;
   }
@@ -237,11 +241,10 @@ export default class KnishIOVuexModel {
    * @param value
    * @returns {Promise<void>}
    */
-  async set( field, value ) {
-    if( this.$__vuexFields.includes( field ) ) {
+  async set ( field, value ) {
+    if ( this.$__vuexFields.includes( field ) ) {
       await this.setVuex( field, value );
-    }
-    else {
+    } else {
       await this.setData( field, value );
     }
   }
@@ -252,11 +255,10 @@ export default class KnishIOVuexModel {
    * @param field
    * @returns {Promise<void>}
    */
-  get( field ) {
-    if( this.$__vuexFields.includes( field ) ) {
+  get ( field ) {
+    if ( this.$__vuexFields.includes( field ) ) {
       return this.getVuex( field );
-    }
-    else {
+    } else {
       return this.getData( field );
     }
   }
