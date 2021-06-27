@@ -1,19 +1,67 @@
+/*
+                               (
+                              (/(
+                              (//(
+                              (///(
+                             (/////(
+                             (//////(                          )
+                            (////////(                        (/)
+                            (////////(                       (///)
+                           (//////////(                      (////)
+                           (//////////(                     (//////)
+                          (////////////(                    (///////)
+                         (/////////////(                   (/////////)
+                        (//////////////(                  (///////////)
+                        (///////////////(                (/////////////)
+                       (////////////////(               (//////////////)
+                      (((((((((((((((((((              (((((((((((((((
+                     (((((((((((((((((((              ((((((((((((((
+                     (((((((((((((((((((            ((((((((((((((
+                    ((((((((((((((((((((           (((((((((((((
+                    ((((((((((((((((((((          ((((((((((((
+                    (((((((((((((((((((         ((((((((((((
+                    (((((((((((((((((((        ((((((((((
+                    ((((((((((((((((((/      (((((((((
+                    ((((((((((((((((((     ((((((((
+                    (((((((((((((((((    (((((((
+                   ((((((((((((((((((  (((((
+                   #################  ##
+                   ################  #
+                  ################# ##
+                 %################  ###
+                 ###############(   ####
+                ###############      ####
+               ###############       ######
+              %#############(        (#######
+             %#############           #########
+            ############(              ##########
+           ###########                  #############
+          #########                      ##############
+        %######
+
+        Powered by Knish.IO: Connecting a Decentralized World
+
+Please visit https://github.com/WishKnish/KnishIO-Identity-Layer for information.
+
+License: https://github.com/WishKnish/KnishIO-Identity-Layer/blob/master/LICENSE
+ */
+
 import {
   generateSecret,
   generateBundleHash
 } from '@wishknish/knishio-client-js/src/libraries/crypto';
-import storageDB from './libraries/storageDB';
+import StorageDB from './libraries/StorageDB';
 import KnishIOVuexModel from './KnishIOVuexModel';
 import UserWallets from './UserWallets';
 
-
 // Declaring indexedDB database
-const db = new storageDB();
-
+const db = new StorageDB();
 
 export default class User {
 
-
+  /**
+   * @return {[string]}
+   */
   static vuexFields () {
     return [
       'secret',
@@ -31,6 +79,9 @@ export default class User {
     ];
   }
 
+  /**
+   * @return {{metas: null, userRoles: {}, userSessions: {}, userData: {}, authTimeout: null, loggedIn: boolean, authToken: string, created_at: null, initialized: boolean, secret: null, bundle: null, username: null}}
+   */
   static defaultState () {
     return {
       secret: null,
@@ -52,7 +103,6 @@ export default class User {
       userSessions: {}
     };
   };
-
 
   /**
    * Generate vuex getters & setters
@@ -145,10 +195,10 @@ export default class User {
 
   /**
    *
-   * @param storage
+   * @param {KnishIOVuexModel} storage
    * @param client
    * @param vm
-   * @param salt
+   * @param {string} salt
    */
   constructor ( storage, client, vm, salt ) {
     this.$__storage = storage; // KnishIOVuexModel
@@ -164,10 +214,11 @@ export default class User {
 
 
   /**
-   * Set any field (vuex OR attrbiute)
-   * @param field
-   * @param value
-   * @returns {Promise<void>}
+   * Set any field (vuex OR attribute)
+   *
+   * @param {string} field
+   * @param {*} value
+   * @returns {Promise<*>}
    */
   async set ( field, value ) {
     await this.$__storage.set( field, value );
@@ -175,8 +226,9 @@ export default class User {
 
 
   /**
-   * Get any field (vuex OR attrbiute)
-   * @param field
+   * Get any field (vuex OR attribute)
+   *
+   * @param {string} field
    * @returns {*}
    */
   get ( field ) {
@@ -186,10 +238,10 @@ export default class User {
 
   /**
    * Init
-   * @param newSecret
-   * @param username
-   * @param uriRefhash
-   * @returns {Promise<void>}
+   * @param {string|null} newSecret
+   * @param {string|null} username
+   * @param {string|null} uriRefhash
+   * @returns {Promise<*>}
    */
   async init ( {
     newSecret = null,
@@ -197,7 +249,6 @@ export default class User {
     uriRefhash = null
   } ) {
     console.log( 'User::init() - Beginning bootstrap procedure...' );
-
 
     // Generating / recovering user's secret
     let secret;
@@ -282,7 +333,7 @@ export default class User {
 
   /**
    *
-   * @param bundle
+   * @param {object} bundle
    * @returns {Promise<void>}
    */
   async restoreData ( bundle ) {
@@ -326,7 +377,7 @@ export default class User {
 
   /**
    *
-   * @param newSecret
+   * @param {string} newSecret
    * @returns {Promise<void>}
    */
   async authorize ( { newSecret } ) {
@@ -390,9 +441,9 @@ export default class User {
   /**
    * Attempts to log in the user by hashing a new secret and retrieving the user's data
    *
-   * @param username
-   * @param password
-   * @param secret
+   * @param {string} username
+   * @param {string} password
+   * @param {string} secret
    * @returns {Promise<void>}
    */
   async login ( {
@@ -455,8 +506,8 @@ export default class User {
   /**
    * Validates the registration state of the user to ensure there is no duplicate
    *
-   * @param username
-   * @param password
+   * @param {string} username
+   * @param {string} password
    * @returns {Promise<void>}
    */
   async register ( {
@@ -540,7 +591,7 @@ export default class User {
    *
    * @param apolloClient
    * @param gqlQuery
-   * @param masterToken
+   * @param {string} masterToken
    * @returns {Promise<void>}
    */
   async subscribeWalletBalance ( apolloClient, gqlQuery, masterToken ) {
@@ -589,7 +640,7 @@ export default class User {
    *
    * @param apolloClient
    * @param gqlQuery
-   * @param masterToken
+   * @param {string} masterToken
    * @returns {Promise<void>}
    */
   async subscribeActiveWallet ( apolloClient, gqlQuery, masterToken ) {

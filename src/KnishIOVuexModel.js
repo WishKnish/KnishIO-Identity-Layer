@@ -1,21 +1,67 @@
+/*
+                               (
+                              (/(
+                              (//(
+                              (///(
+                             (/////(
+                             (//////(                          )
+                            (////////(                        (/)
+                            (////////(                       (///)
+                           (//////////(                      (////)
+                           (//////////(                     (//////)
+                          (////////////(                    (///////)
+                         (/////////////(                   (/////////)
+                        (//////////////(                  (///////////)
+                        (///////////////(                (/////////////)
+                       (////////////////(               (//////////////)
+                      (((((((((((((((((((              (((((((((((((((
+                     (((((((((((((((((((              ((((((((((((((
+                     (((((((((((((((((((            ((((((((((((((
+                    ((((((((((((((((((((           (((((((((((((
+                    ((((((((((((((((((((          ((((((((((((
+                    (((((((((((((((((((         ((((((((((((
+                    (((((((((((((((((((        ((((((((((
+                    ((((((((((((((((((/      (((((((((
+                    ((((((((((((((((((     ((((((((
+                    (((((((((((((((((    (((((((
+                   ((((((((((((((((((  (((((
+                   #################  ##
+                   ################  #
+                  ################# ##
+                 %################  ###
+                 ###############(   ####
+                ###############      ####
+               ###############       ######
+              %#############(        (#######
+             %#############           #########
+            ############(              ##########
+           ###########                  #############
+          #########                      ##############
+        %######
+
+        Powered by Knish.IO: Connecting a Decentralized World
+
+Please visit https://github.com/WishKnish/KnishIO-Identity-Layer for information.
+
+License: https://github.com/WishKnish/KnishIO-Identity-Layer/blob/master/LICENSE
+ */
+
 import {
   getField as getFieldWrapper,
   updateField as setFieldWrapper
 } from 'vuex-map-fields';
-
 
 /**
  *
  */
 export default class KnishIOVuexModel {
 
-
   /**
    * Generate vuex getters & setters
    * @param module
-   * @param fields
-   * @param getters
-   * @param mutations
+   * @param {[string]} fields
+   * @param {[{}]} getters
+   * @param {[{}]} mutations
    * @returns {*}
    */
   static fillVuexStorage ( module, fields, getters = [], mutations = [] ) {
@@ -57,11 +103,10 @@ export default class KnishIOVuexModel {
     return module;
   }
 
-
   /**
    *
-   * @param module
-   * @param defaultState
+   * @param {object} module
+   * @param {object} defaultState
    */
   static overrideState ( module, defaultState ) {
 
@@ -90,14 +135,13 @@ export default class KnishIOVuexModel {
     module.state = defaultState;
   }
 
-
   /**
    *
    * @param store
    * @param vuexFields
-   * @param attributes
-   * @param prefix
-   * @param logging
+   * @param {string} prefix
+   * @param {[{}]} attributes
+   * @param {boolean} logging
    */
   constructor ( store, vuexFields, prefix, attributes = [], logging = false ) {
 
@@ -118,16 +162,15 @@ export default class KnishIOVuexModel {
 
   /**
    *
-   * @returns {*[]}
+   * @returns {[{}]}
    */
   attributes () {
     return this.$__attributes;
   }
 
-
   /**
    *
-   * @returns {{}}
+   * @returns {object}
    */
   getComputed () {
     let computed = {};
@@ -161,11 +204,10 @@ export default class KnishIOVuexModel {
     await this.setVuex( fieldName, data );
   }
 
-
   /**
    * Get a data value
-   * @param key
-   * @returns {Promise<void>}
+   * @param {string} key
+   * @returns {Promise<*>}
    */
   getData ( key ) {
     let fieldName = `${ this.$__prefix }_data`;
@@ -189,11 +231,10 @@ export default class KnishIOVuexModel {
     return value;
   }
 
-
   /**
    * Set a value to vuex
-   * @param field
-   * @param value
+   * @param {string} field
+   * @param {*} value
    */
   async setVuex ( field, value ) {
     if ( this.$__logging ) {
@@ -207,9 +248,11 @@ export default class KnishIOVuexModel {
     } );
   }
 
-
   /**
    * Get a value from vuex
+   *
+   * @param {string} field
+   * @return {*}
    */
   getVuex ( field ) {
     let value = this.$__store.getters[ `${ this.$__prefix }/getField` ]( field.toCamelCase() );
@@ -219,11 +262,10 @@ export default class KnishIOVuexModel {
     return value;
   }
 
-
   /**
    * Get a value from vuex with async
    *
-   * @param field
+   * @param {string} field
    * @returns {Promise<*>}
    */
   async getVuexAsync ( field ) {
@@ -234,12 +276,11 @@ export default class KnishIOVuexModel {
     return value;
   }
 
-
   /**
-   * Set any field (vuex OR attrbiute)
-   * @param field
-   * @param value
-   * @returns {Promise<void>}
+   * Set any field (vuex OR attribute)
+   * @param {string} field
+   * @param {*} value
+   * @returns {Promise<*>}
    */
   async set ( field, value ) {
     if ( this.$__vuexFields.includes( field ) ) {
@@ -251,9 +292,10 @@ export default class KnishIOVuexModel {
 
 
   /**
-   * Get any field (vuex OR attrbiute)
-   * @param field
-   * @returns {Promise<void>}
+   * Get any field (vuex OR attribute)
+   *
+   * @param {string} field
+   * @returns {Promise<*>}
    */
   get ( field ) {
     if ( this.$__vuexFields.includes( field ) ) {
@@ -262,6 +304,5 @@ export default class KnishIOVuexModel {
       return this.getData( field );
     }
   }
-
 
 }
