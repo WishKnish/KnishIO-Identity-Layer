@@ -25,12 +25,12 @@ export default class KnishIOVuexModel {
     fields.forEach( ( field ) => {
       getters.push( {
         name: `get_${ field }`.toUpperCase(), fn: ( state ) => {
-          return state[ field.toCamelCase() ];
+          return state[ prefix ][ field.toCamelCase() ];
         },
       } );
       mutations.push( {
         name: `set_${ field }`.toUpperCase(), fn: ( state, value ) => {
-          state[ field.toCamelCase() ] = value;
+          state[ prefix ][ field.toCamelCase() ] = value;
         },
       } );
     } );
@@ -187,7 +187,8 @@ export default class KnishIOVuexModel {
    * Get a value from vuex
    */
   getVuex( field ) {
-    let value = this.$__store.getters[ `${ this.$__prefix }/getField` ]( field.toCamelCase() );
+    let value = this.$__store.getters[ `${ this.$__prefix }/getField` ]( `${ this.$__prefix }.${ field.toCamelCase() }` );
+    // let value = this.$__store.getters[ `${ this.$__prefix }/GET_${ field.toUpperCase() }` ];
     if ( this.$__logging ) {
       console.log( `------- getVuex: ${this.$__prefix}/GET_${field.toUpperCase()} - ${value}` );
     }

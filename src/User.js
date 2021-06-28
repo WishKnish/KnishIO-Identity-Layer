@@ -62,14 +62,14 @@ export default class User {
 
     let getters = [
       { name: 'GET_SECRET', fn: async ( state ) => {
-        return state.secret ? state.secret : db.getDataPromise( 'secret' );
+        return state.user.secret ? state.user.secret : db.getDataPromise( 'secret' );
       }, },
       { name: 'GET_USERNAME', fn: ( state ) => {
-        return state.username ? state.username : db.getDataPromise('username' );
+        return state.user.username ? state.user.username : db.getDataPromise('username' );
       }, },
       { name: 'GET_AUTH_TOKEN', fn: async ( state ) => {
-        if ( state.authToken ) {
-          return state.authToken;
+        if ( state.user.authToken ) {
+          return state.user.authToken;
         }
         let authToken = await db.getDataPromise( 'authToken' );
         return authToken ? JSON.parse( authToken ) : null;
@@ -77,15 +77,15 @@ export default class User {
     ];
     let mutations = [
       { name: 'SET_SECRET', fn: async ( state, secret ) => {
-        state.secret = secret;
+        state.user.secret = secret;
         await db.setDataPromise( 'secret', secret );
       }, },
       { name: 'SET_USERNAME', fn: async ( state, username ) => {
-        state.username = username;
+        state.user.username = username;
         await db.setDataPromise( 'username', username );
       }, },
       { name: 'SET_AUTH_TOKEN', fn: async ( state, authToken ) => {
-        state.authToken = authToken;
+        state.user.authToken = authToken;
         await db.setDataPromise( 'authToken', JSON.stringify(authToken) );
       }, },
 
@@ -93,7 +93,7 @@ export default class User {
           console.log( 'User::resetState() - Mutating user state...' );
           await db.deleteDataPromise( 'username' );
           await db.deleteDataPromise( 'secret' );
-          Object.assign( state, defaultState );
+          Object.assign( state.user, defaultState );
       }, },
     ];
 

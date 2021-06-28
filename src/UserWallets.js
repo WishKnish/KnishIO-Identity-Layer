@@ -29,12 +29,14 @@ export default class UserWallets {
    */
   static fillVuexStorage( module ) {
 
+
+
     let getters = [
     ];
     let mutations = [
       { name: 'RESET_STATE', fn: ( state, defaultState ) => {
         Object.keys( defaultState ).forEach( key => {
-          state[ key ] = defaultState[ key ];
+          state.wallet[ key ] = defaultState[ key ];
         } );
       }, },
     ];
