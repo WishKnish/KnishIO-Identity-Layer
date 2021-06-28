@@ -21,8 +21,8 @@ export default class identity {
     options.getters = {};
     options.mutations = {};
 
-    User.fillVuexStorage( options ),
-    UserWallets.fillVuexStorage( options ),
+    User.fillVuexStorage( options );
+    UserWallets.fillVuexStorage( options );
 
     return options;
   }
