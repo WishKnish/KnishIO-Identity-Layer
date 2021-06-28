@@ -23,7 +23,6 @@ export default class identity {
 
     User.fillVuexStorage( options ),
     UserWallets.fillVuexStorage( options ),
-    console.error( options );
 
     return options;
   }
