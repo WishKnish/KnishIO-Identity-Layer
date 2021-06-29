@@ -179,7 +179,7 @@ export default class User {
       secret = await this.$__storage.getVuexAsync( 'secret' );
     }
     // !!! Set the secret for update a local state to set related computed up to date
-    await this.$__store.commit( 'user/SET_SECRET', secret );
+    await this.$__storage.setVuex( 'secret', secret );
 
     // Save username
     if ( username ) {
@@ -317,13 +317,12 @@ export default class User {
     // Get stored secret & set it to the KnishIOClient
     console.log( 'User::authorize() - Retrieving user identity...' );
     let secret = await this.$__storage.getVuexAsync( 'secret' );
-    // await this.$__store.getters[ `${ this.$__prefix}/GET_SECRET` ];
     if ( secret ) {
       this.$__client.setSecret( secret );
     }
 
     // Auth token default initialization
-    let authToken = await this.$__store.getters[ `${ this.$__prefix}/GET_AUTH_TOKEN` ];
+    let authToken = await this.$__storage.getVuexAsync( 'auth_token' );
     console.log( `User::authorize() - Retrieving auth token ${ authToken ? authToken.token : 'NONE' }...` );
 
     // Try to get a new auth token
@@ -505,7 +504,6 @@ export default class User {
     console.log( 'User::update() - Subscribe wallet balance...' );
 
     let wallets = await this.wallets.getWallets();
-    // let wallets = await this.$__store.rootGetters[ 'wallet/GET_WALLETS' ]();
 
     for ( let token in wallets ) {
       if ( token === masterToken ) {

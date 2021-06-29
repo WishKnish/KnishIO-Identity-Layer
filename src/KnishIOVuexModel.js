@@ -118,6 +118,7 @@ export default class KnishIOVuexModel {
     return computed;
   }
 
+
   /**
    * Set data value
    *

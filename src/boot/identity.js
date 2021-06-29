@@ -1,8 +1,6 @@
 import User from '@wishknish/knishio-identity-layer/src/User';
 import KnishIOVuexModel from '@wishknish/knishio-identity-layer/src/KnishIOVuexModel';
 import UserWallets from '@wishknish/knishio-identity-layer/src/UserWallets';
-import user from '../../../../../src/store/user';
-import wallet from '../../../../../src/store/wallet';
 
 /**
  *

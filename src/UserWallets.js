@@ -29,8 +29,6 @@ export default class UserWallets {
    */
   static fillVuexStorage( module ) {
 
-
-
     let getters = [
     ];
     let mutations = [
@@ -109,8 +107,7 @@ export default class UserWallets {
    */
   async reset () {
     console.log( 'Wallet::reset() - Deleting wallet meta...' );
-
-    this.$__store.commit( 'wallet/RESET_STATE', UserWallets.defaultState() );
+    this.$__store.commit( `${ this.$__storage.$__prefix }/RESET_STATE`, UserWallets.defaultState() );
   }
 
 
