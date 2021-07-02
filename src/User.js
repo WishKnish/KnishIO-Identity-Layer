@@ -560,7 +560,6 @@ export default class User {
 
       let wallet = wallets[ token ];
       let self = this;
-      // let vm = this.$__vm;
 
       const observer = apolloClient.subscribe( {
         query: gqlQuery,
