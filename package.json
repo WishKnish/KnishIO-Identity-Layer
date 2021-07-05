@@ -1,8 +1,8 @@
 {
   "name": "@wishknish/knishio-identity-layer",
-  "version": "0.4.19",
-  "productName": "Knish.IO Identity layer",
-  "description": "Knish.IO Identity layer",
+  "version": "0.0.1",
+  "productName": "Knish.IO Identity Layer",
+  "description": "Modular library intended to integrate with KnishKits, KnishPass, and other Knish.IO-based VueJS dApps for the purpose of simplifying interaction with user sessions and user data.",
   "license": "GPL-3.0-or-later",
   "repository": {
     "type": "git",
