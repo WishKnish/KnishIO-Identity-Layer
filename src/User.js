@@ -3,6 +3,7 @@ import storageDB from "./libraries/storageDB";
 import KnishIOVuexModel from './KnishIOVuexModel';
 import UserWallets from './UserWallets';
 import ModelEventListener from '@wishknish/knishio-identity-layer/src/ModelEventListener';
+import AuthToken from "@wishknish/knishio-client-js/src/AuthToken";
 
 
 
@@ -102,12 +103,13 @@ export default class User {
   }
 
   /**
-   * Create a user instance
+   * Create new user instance
    *
    * @param store
    * @param client
    * @param vm
-   * @returns {null}
+   * @param salt
+   * @returns {User}
    */
   static instance( store, client, vm, salt ) {
     if ( !User._instance ) {
@@ -305,7 +307,6 @@ export default class User {
    * @returns {Promise<void>}
    */
   async authorize( { newSecret, }, ) {
-
     console.log( 'User::authorize() - Starting authorization process...' );
 
     // Has a new secret: saving secret locally & update it on KnishIOClient
@@ -322,22 +323,32 @@ export default class User {
     }
 
     // Auth token default initialization
-    let authToken = await this.$__storage.getVuexAsync( 'auth_token' );
-    console.log( `User::authorize() - Retrieving auth token ${ authToken ? authToken.token : 'NONE' }...` );
+    let authTokenData = await this.$__storage.getVuexAsync( 'auth_token' );
+
+    // Has a stored auth token data - restore an authToken object from it
+    let authTokenObject = null;
+    if ( authTokenData ) {
+      authTokenObject = AuthToken.restore( authTokenData );
+    }
+    console.log( `User::authorize() - Retrieving auth token ${ authTokenObject ? authTokenObject.getToken() : 'NONE' }...` );
+
 
     // Try to get a new auth token
-    if ( newSecret || !authToken || !authToken.expiresAt || authToken.expiresAt * 1000 < Date.now() ) {
-      authToken = await this.$__client.authorize({
+    console.log( authTokenObject );
+    if ( newSecret || !authTokenObject || !authTokenObject.isExpired() ) {
+
+      // Get a new auth token
+      authTokenObject = await this.$__client.authorize({
         secret,
       });
-      console.log( `User::authorize() - Get a new auth token ${ authToken.token }...` );
+      console.log( `User::authorize() - Get a new auth token ${ authTokenObject.getToken() }...` );
 
       // Save authToken & set some refresh code
-      await this.set( 'auth_token', authToken );
+      await this.set( 'auth_token', authTokenObject.getSnapshot() );
     }
 
     // Set an auth token to the KnishIOClient
-    this.$__client.setAuthToken( authToken );
+    this.$__client.setAuthToken( authTokenObject );
 
 
 
@@ -346,17 +357,16 @@ export default class User {
     clearTimeout( authTimeout );
 
     // Create a new auth token timeouts
-    console.log( `User::authorize() - Set auth timeout to ${ new Date(authToken.expiresAt * 1000) } ...` );
+    console.log( `User::authorize() - Set auth timeout interval to ${ authTokenObject.getExpireInterval() } seconds...` );
     let self = this;
     authTimeout = setTimeout( self => {
       ( async self => {
         await self.authorize( { newSecret, } );
       } )( self );
-    }, ( authToken.expiresAt * 1000 ) - Date.now(), self );
+    }, authTokenObject.getExpireInterval(), self );
+
     // Save auth timeout
     await this.set( 'auth_timeout', authTimeout );
-
-
   }
 
 
