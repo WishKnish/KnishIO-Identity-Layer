@@ -334,8 +334,7 @@ export default class User {
 
 
     // Try to get a new auth token
-    console.log( authTokenObject );
-    if ( newSecret || !authTokenObject || !authTokenObject.isExpired() ) {
+    if ( newSecret || !authTokenObject || authTokenObject.isExpired() ) {
 
       // Get a new auth token
       authTokenObject = await this.$__client.authorize({
@@ -357,7 +356,7 @@ export default class User {
     clearTimeout( authTimeout );
 
     // Create a new auth token timeouts
-    console.log( `User::authorize() - Set auth timeout interval to ${ authTokenObject.getExpireInterval() } seconds...` );
+    console.log( `User::authorize() - Set auth timeout interval to ${ Math.floor( authTokenObject.getExpireInterval() / 1000 ) } seconds...` );
     let self = this;
     authTimeout = setTimeout( self => {
       ( async self => {
