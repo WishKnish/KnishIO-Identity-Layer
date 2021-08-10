@@ -328,7 +328,7 @@ export default class User {
     // Has a stored auth token data - restore an authToken object from it
     let authTokenObject = null;
     if ( authTokenData ) {
-      authTokenObject = AuthToken.restore( authTokenData );
+      authTokenObject = AuthToken.restore( authTokenData, secret );
     }
     console.log( `User::authorize() - Retrieving auth token ${ authTokenObject ? authTokenObject.getToken() : 'NONE' }...` );
 
