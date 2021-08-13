@@ -1,5 +1,5 @@
 import KnishIOVuexModel from './KnishIOVuexModel';
-import { Wallet } from '@wishknish/knishio-client-js';
+import { Wallet, } from '@wishknish/knishio-client-js';
 
 
 /**
@@ -7,17 +7,16 @@ import { Wallet } from '@wishknish/knishio-client-js';
  */
 export default class UserWallets {
 
-  static vuexFields () {
+  static vuexFields() {
     return [
       'wallets',
-      'shadow_wallets'
+      'shadow_wallets',
     ];
   }
-
-  static defaultState () {
+  static defaultState() {
     return {
       wallets: {},
-      shadowWallets: {}
+      shadowWallets: {},
     };
   };
 
@@ -28,26 +27,21 @@ export default class UserWallets {
    * @param module
    * @returns {*}
    */
-  static fillVuexStorage ( module ) {
+  static fillVuexStorage( module ) {
 
-    let getters = [];
+    let getters = [
+    ];
     let mutations = [
-      {
-        name: 'RESET_STATE',
-        fn: ( state, defaultState ) => {
-          Object.keys( defaultState ).forEach( key => {
-            state[ key ] = defaultState[ key ];
-          } );
-        }
-      }
+      { name: 'RESET_STATE', fn: ( state, defaultState ) => {
+        Object.keys( defaultState ).forEach( key => {
+          state.wallet[ key ] = defaultState[ key ];
+        } );
+      }, },
     ];
 
 
-    // Override state
-    KnishIOVuexModel.overrideState( module, UserWallets.defaultState() );
-
     // Fill all vuex data
-    return KnishIOVuexModel.fillVuexStorage( module, UserWallets.vuexFields(), getters, mutations );
+    return KnishIOVuexModel.fillVuexStorage( module, 'wallet', UserWallets.vuexFields(), UserWallets.defaultState(), getters, mutations );
   }
 
 
@@ -69,7 +63,7 @@ export default class UserWallets {
    * @param shadow
    * @returns {Promise<*|*>}
    */
-  async getWallets ( tokenSlug = null, shadow = false ) {
+  async getWallets( tokenSlug = null, shadow = false ) {
     let wallets = await this.$__storage.getVuex( shadow ? 'shadow_wallets' : 'wallets' );
     if ( !tokenSlug ) {
       return wallets;
@@ -83,7 +77,7 @@ export default class UserWallets {
    * @param tokenSlug
    * @returns {Promise<*>}
    */
-  async getShadowWallets ( tokenSlug = null ) {
+  async getShadowWallets( tokenSlug = null ) {
     return await this.getWallets( tokenSlug, true );
   }
 
@@ -95,15 +89,11 @@ export default class UserWallets {
    * @param position
    * @returns {Promise<void>}
    */
-  async init ( {
-    secret,
-    token,
-    position = null
-  } ) {
+  async init ( { secret, token, position = null, } ) {
     const wallet = new Wallet( {
       secret,
       token,
-      position
+      position,
     } );
 
     // Generating initial master wallet
@@ -117,9 +107,7 @@ export default class UserWallets {
    */
   async reset () {
     console.log( 'Wallet::reset() - Deleting wallet meta...' );
-    console.log( this.$__store.getters );
-
-    this.$__store.commit( 'wallet/RESET_STATE', UserWallets.defaultState() );
+    this.$__store.commit( `${ this.$__storage.$__prefix }/RESET_STATE`, UserWallets.defaultState() );
   }
 
 
@@ -141,7 +129,8 @@ export default class UserWallets {
       // Set wallet
       if ( wallet.address ) {
         this.setWallet( wallet );
-      } else {
+      }
+      else {
         this.setShadowWallet( wallet );
       }
 
@@ -176,7 +165,7 @@ export default class UserWallets {
    */
   async setShadowWallet ( wallet ) {
     console.log( `Wallet::SET_WALLET_SHADOW - Setting ${ wallet.token } shadow wallet...` );
-    this.$__store.$set( this.$__store.state.shadowWallets, wallet.token, wallet );
+    this.$__vm.$set( this.$__store.state.wallet.shadowWallets, wallet.token, wallet );
   }
 
 

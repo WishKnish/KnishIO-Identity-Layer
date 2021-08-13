@@ -1,147 +1,76 @@
-/*
-                               (
-                              (/(
-                              (//(
-                              (///(
-                             (/////(
-                             (//////(                          )
-                            (////////(                        (/)
-                            (////////(                       (///)
-                           (//////////(                      (////)
-                           (//////////(                     (//////)
-                          (////////////(                    (///////)
-                         (/////////////(                   (/////////)
-                        (//////////////(                  (///////////)
-                        (///////////////(                (/////////////)
-                       (////////////////(               (//////////////)
-                      (((((((((((((((((((              (((((((((((((((
-                     (((((((((((((((((((              ((((((((((((((
-                     (((((((((((((((((((            ((((((((((((((
-                    ((((((((((((((((((((           (((((((((((((
-                    ((((((((((((((((((((          ((((((((((((
-                    (((((((((((((((((((         ((((((((((((
-                    (((((((((((((((((((        ((((((((((
-                    ((((((((((((((((((/      (((((((((
-                    ((((((((((((((((((     ((((((((
-                    (((((((((((((((((    (((((((
-                   ((((((((((((((((((  (((((
-                   #################  ##
-                   ################  #
-                  ################# ##
-                 %################  ###
-                 ###############(   ####
-                ###############      ####
-               ###############       ######
-              %#############(        (#######
-             %#############           #########
-            ############(              ##########
-           ###########                  #############
-          #########                      ##############
-        %######
+import {getField as getFieldWrapper, updateField as setFieldWrapper, } from 'vuex-map-fields';
 
-        Powered by Knish.IO: Connecting a Decentralized World
-
-Please visit https://github.com/WishKnish/KnishIO-Identity-Layer for information.
-
-License: https://github.com/WishKnish/KnishIO-Identity-Layer/blob/master/LICENSE
- */
-
-import {
-  getField as getFieldWrapper,
-  updateField as setFieldWrapper
-} from 'vuex-map-fields';
 
 /**
  *
  */
 export default class KnishIOVuexModel {
 
+
   /**
    * Generate vuex getters & setters
-   * @param module
-   * @param {[string]} fields
-   * @param {[{}]} getters
-   * @param {[{}]} mutations
+   * @param object
+   * @param fields
+   * @param getters
+   * @param mutations
    * @returns {*}
    */
-  static fillVuexStorage ( module, fields, getters = [], mutations = [] ) {
+  static fillVuexStorage( object, prefix, fields, defaultState, getters = [], mutations = [] ) {
+
+    let withPrefix = ( key ) => {
+      return `${ prefix }/${ key }`;
+    };
 
     // Fill getters & mutations with base fields
     fields.forEach( ( field ) => {
       getters.push( {
-        name: `get_${ field }`.toUpperCase(),
-        fn: ( state ) => {
-          return state[ field.toCamelCase() ];
-        }
+        name: `get_${ field }`.toUpperCase(), fn: ( state ) => {
+          return state[ prefix ][ field.toCamelCase() ];
+        },
       } );
       mutations.push( {
-        name: `set_${ field }`.toUpperCase(),
-        fn: ( state, value ) => {
-          state[ field.toCamelCase() ] = value;
-        }
+        name: `set_${ field }`.toUpperCase(), fn: ( state, value ) => {
+          state[ prefix ][ field.toCamelCase() ] = value;
+        },
       } );
     } );
 
-    // Add getters & mutations to the module
+    // Add getters & mutations to the object
     getters.forEach( ( getter ) => {
-      if ( !module.getters.hasOwnProperty( getter.name ) ) {
+      if ( !object.getters.hasOwnProperty( withPrefix( getter.name ) ) ) {
         // console.log( `KnishIOVuexModel::fillVuexStorage ADD: ${ getter.name } => ${ getter.fn }` );
-        module.getters[ getter.name ] = getter.fn;
+        object.getters[ withPrefix( getter.name ) ] = getter.fn;
       }
     } );
     mutations.forEach( ( mutation ) => {
-      if ( !module.mutations.hasOwnProperty( mutation.name ) ) {
+      if ( !object.mutations.hasOwnProperty( withPrefix( mutation.name ) ) ) {
         // console.log( `KnishIOVuexModel::fillVuexStorage ADD: ${ mutation.name } => ${ mutation.fn }` );
-        module.mutations[ mutation.name ] = mutation.fn;
+        object.mutations[ withPrefix( mutation.name ) ] = mutation.fn;
       }
     } );
 
     // Add get/set field functions
-    module.getters[ 'getField' ] = getFieldWrapper;
-    module.mutations[ 'updateField' ] = setFieldWrapper;
-
-    return module;
-  }
-
-  /**
-   *
-   * @param {object} module
-   * @param {object} defaultState
-   */
-  static overrideState ( module, defaultState ) {
-
-    // Generate new getters object without GET_DEFAULT_STATE
-    let newGetters = {};
-    for ( let i in module.getters ) {
-      if ( !Object.prototype.hasOwnProperty.call( module.getters, 'GET_DEFAULT_STATE' ) ) {
-        continue;
-      }
-      newGetters[ i ] = module.getters[ i ];
-    }
-    // Merge default state with the original data
-    if ( module.getters.GET_DEFAULT_STATE ) {
-      for ( let i in module.getters.GET_DEFAULT_STATE() ) {
-        defaultState[ i ] = module.getters.GET_DEFAULT_STATE()[ i ];
-      }
-    }
-
-    // Add new function & related getter to the new getters object
-    newGetters.GET_DEFAULT_STATE = () => {
-      return defaultState;
-    };
+    object.getters[ withPrefix( 'getField' ) ] = getFieldWrapper;
+    object.mutations[ withPrefix( 'updateField' ) ] = setFieldWrapper;
 
     // Override module.getters & state
-    module.getters = newGetters;
-    module.state = defaultState;
+    object.getters[ withPrefix( 'GET_DEFAULT_STATE' ) ] = () => {
+      return defaultState;
+    };
+    object.state[ prefix ] = defaultState;
+
+    return object;
   }
+
+
 
   /**
    *
    * @param store
    * @param vuexFields
-   * @param {string} prefix
-   * @param {[{}]} attributes
-   * @param {boolean} logging
+   * @param attributes
+   * @param prefix
+   * @param logging
    */
   constructor ( store, vuexFields, prefix, attributes = [], logging = false ) {
 
@@ -162,17 +91,18 @@ export default class KnishIOVuexModel {
 
   /**
    *
-   * @returns {[{}]}
+   * @returns {*[]}
    */
-  attributes () {
+  attributes() {
     return this.$__attributes;
   }
 
+
   /**
    *
-   * @returns {object}
+   * @returns {{}}
    */
-  getComputed () {
+  getComputed() {
     let computed = {};
     this.$__vuexFields.concat( this.$__attributes ).forEach( ( field ) => {
       let computedField = this.$__vuexFields.includes( field ) ? field.toCamelCase() : field;
@@ -181,12 +111,13 @@ export default class KnishIOVuexModel {
           return this.get( field );
         },
         set: ( value ) => {
-          return this.set( field, value );
-        }
+          this.set( field, value );
+        },
       };
     } );
     return computed;
   }
+
 
   /**
    * Set data value
@@ -194,33 +125,34 @@ export default class KnishIOVuexModel {
    * @param key
    * @param value
    */
-  async setData ( key, value ) {
+  async setData( key, value ) {
     let fieldName = `${ this.$__prefix }_data`;
     let data = this.get( fieldName );
     data[ key ] = value;
     if ( this.$__logging ) {
-      console.log( `------- setAttribute ${ fieldName }: ${ key } = ${ value }` );
+      console.log( `------- setAttribute ${ fieldName }: ${key} = ${value}` );
     }
     await this.setVuex( fieldName, data );
   }
 
+
   /**
    * Get a data value
-   * @param {string} key
-   * @returns {Promise<*>}
+   * @param key
+   * @returns {Promise<void>}
    */
-  getData ( key ) {
+  getData( key ) {
     let fieldName = `${ this.$__prefix }_data`;
     let data = this.get( fieldName );
     if ( !data ) {
       if ( this.$__logging ) {
-        console.warn( ` ${ this.constructor.name }.data is empty.` );
+        console.warn( ` ${this.constructor.name}.data is empty.` );
       }
       return null;
     }
     if ( !data.hasOwnProperty( key ) ) {
       if ( this.$__logging ) {
-        console.error( ` ${ this.constructor.name }.data[ ${ key } ] does exists.` );
+        console.error( ` ${this.constructor.name}.data[ ${key} ] does exists.` );
       }
       return null;
     }
@@ -231,78 +163,84 @@ export default class KnishIOVuexModel {
     return value;
   }
 
+
+
   /**
    * Set a value to vuex
-   * @param {string} field
-   * @param {*} value
+   * @param field
+   * @param value
    */
-  async setVuex ( field, value ) {
+  async setVuex( field, value ) {
     if ( this.$__logging ) {
-      console.log( `------- setVuex: ${ this.$__prefix }/SET_${ field.toUpperCase() } = ${ value }` );
+      console.log( `------- setVuex: ${this.$__prefix}/SET_${field.toUpperCase()} = ${value}` );
     }
-
-    // await this.$__store.commit( `${ this.$__prefix }/SET_${ field.toUpperCase() }`, value );
-    this.$__store.commit( `${ this.$__prefix }/updateField`, {
+    await this.$__store.commit( `${ this.$__prefix }/SET_${ field.toUpperCase() }`, value );
+    /*
+    this.$__store.commit( `${this.$__prefix}/updateField`, {
       path: field.toCamelCase(),
-      value: value
+      value: value,
     } );
+    */
   }
+
 
   /**
    * Get a value from vuex
-   *
-   * @param {string} field
-   * @return {*}
    */
-  getVuex ( field ) {
-    let value = this.$__store.getters[ `${ this.$__prefix }/getField` ]( field.toCamelCase() );
+  getVuex( field ) {
+    let value = this.$__store.getters[ `${ this.$__prefix }/getField` ]( `${ this.$__prefix }.${ field.toCamelCase() }` );
+    // let value = this.$__store.getters[ `${ this.$__prefix }/GET_${ field.toUpperCase() }` ];
     if ( this.$__logging ) {
-      console.log( `------- getVuex: ${ this.$__prefix }/GET_${ field.toUpperCase() } - ${ value }` );
+      console.log( `------- getVuex: ${this.$__prefix}/GET_${field.toUpperCase()} - ${value}` );
     }
     return value;
   }
+
 
   /**
    * Get a value from vuex with async
    *
-   * @param {string} field
+   * @param field
    * @returns {Promise<*>}
    */
-  async getVuexAsync ( field ) {
+  async getVuexAsync( field ) {
     let value = await this.$__store.getters[ `${ this.$__prefix }/GET_${ field.toUpperCase() }` ];
     if ( this.$__logging ) {
-      console.log( `------- getVuexAsync: ${ this.$__prefix }/GET_${ field.toUpperCase() } - ${ value }` );
+      console.log( `------- getVuexAsync: ${this.$__prefix}/GET_${field.toUpperCase()} - ${value}` );
     }
     return value;
   }
 
+
   /**
-   * Set any field (vuex OR attribute)
-   * @param {string} field
-   * @param {*} value
-   * @returns {Promise<*>}
+   * Set any field (vuex OR attrbiute)
+   * @param field
+   * @param value
+   * @returns {Promise<void>}
    */
-  async set ( field, value ) {
-    if ( this.$__vuexFields.includes( field ) ) {
+  async set( field, value ) {
+    if( this.$__vuexFields.includes( field ) ) {
       await this.setVuex( field, value );
-    } else {
+    }
+    else {
       await this.setData( field, value );
     }
   }
 
 
   /**
-   * Get any field (vuex OR attribute)
-   *
-   * @param {string} field
-   * @returns {Promise<*>}
+   * Get any field (vuex OR attrbiute)
+   * @param field
+   * @returns {Promise<void>}
    */
-  get ( field ) {
-    if ( this.$__vuexFields.includes( field ) ) {
+  get( field ) {
+    if( this.$__vuexFields.includes( field ) ) {
       return this.getVuex( field );
-    } else {
+    }
+    else {
       return this.getData( field );
     }
   }
+
 
 }

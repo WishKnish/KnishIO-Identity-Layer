@@ -1,68 +1,21 @@
-/*
-                               (
-                              (/(
-                              (//(
-                              (///(
-                             (/////(
-                             (//////(                          )
-                            (////////(                        (/)
-                            (////////(                       (///)
-                           (//////////(                      (////)
-                           (//////////(                     (//////)
-                          (////////////(                    (///////)
-                         (/////////////(                   (/////////)
-                        (//////////////(                  (///////////)
-                        (///////////////(                (/////////////)
-                       (////////////////(               (//////////////)
-                      (((((((((((((((((((              (((((((((((((((
-                     (((((((((((((((((((              ((((((((((((((
-                     (((((((((((((((((((            ((((((((((((((
-                    ((((((((((((((((((((           (((((((((((((
-                    ((((((((((((((((((((          ((((((((((((
-                    (((((((((((((((((((         ((((((((((((
-                    (((((((((((((((((((        ((((((((((
-                    ((((((((((((((((((/      (((((((((
-                    ((((((((((((((((((     ((((((((
-                    (((((((((((((((((    (((((((
-                   ((((((((((((((((((  (((((
-                   #################  ##
-                   ################  #
-                  ################# ##
-                 %################  ###
-                 ###############(   ####
-                ###############      ####
-               ###############       ######
-              %#############(        (#######
-             %#############           #########
-            ############(              ##########
-           ###########                  #############
-          #########                      ##############
-        %######
-
-        Powered by Knish.IO: Connecting a Decentralized World
-
-Please visit https://github.com/WishKnish/KnishIO-Identity-Layer for information.
-
-License: https://github.com/WishKnish/KnishIO-Identity-Layer/blob/master/LICENSE
- */
-
-import {
-  generateSecret,
-  generateBundleHash
-} from '@wishknish/knishio-client-js/src/libraries/crypto';
-import StorageDB from './libraries/StorageDB';
+import { generateSecret, generateBundleHash, } from '@wishknish/knishio-client-js/src/libraries/crypto';
+import storageDB from "./libraries/storageDB";
 import KnishIOVuexModel from './KnishIOVuexModel';
 import UserWallets from './UserWallets';
+import ModelEventListener from '@wishknish/knishio-identity-layer/src/ModelEventListener';
+import AuthToken from "@wishknish/knishio-client-js/src/AuthToken";
+
+
+
 
 // Declaring indexedDB database
-const db = new StorageDB();
+const db = new storageDB();
+
 
 export default class User {
 
-  /**
-   * @return {[string]}
-   */
-  static vuexFields () {
+
+  static vuexFields() {
     return [
       'secret',
       'username',
@@ -75,14 +28,10 @@ export default class User {
       'logged_in',
       'initialized',
 
-      'user_data'
+      'user_data',
     ];
   }
-
-  /**
-   * @return {{metas: null, userRoles: {}, userSessions: {}, userData: {}, authTimeout: null, loggedIn: boolean, authToken: string, created_at: null, initialized: boolean, secret: null, bundle: null, username: null}}
-   */
-  static defaultState () {
+  static defaultState() {
     return {
       secret: null,
       username: null,
@@ -98,11 +47,11 @@ export default class User {
 
       authToken: '',
       authTimeout: null,
-
-      userRoles: {},
-      userSessions: {}
-    };
+    }
   };
+
+
+
 
   /**
    * Generate vuex getters & setters
@@ -110,95 +59,71 @@ export default class User {
    * @param module
    * @returns {*}
    */
-  static fillVuexStorage ( module ) {
+  static fillVuexStorage( module ) {
 
     let getters = [
-      {
-        name: 'GET_SECRET',
-        fn: async ( state ) => {
-          return state.secret ? state.secret : db.getDataPromise( 'secret' );
+      { name: 'GET_SECRET', fn: async ( state ) => {
+        return state.user.secret ? state.user.secret : db.getDataPromise( 'secret' );
+      }, },
+      { name: 'GET_USERNAME', fn: ( state ) => {
+        return state.user.username ? state.user.username : db.getDataPromise('username' );
+      }, },
+      { name: 'GET_AUTH_TOKEN', fn: async ( state ) => {
+        if ( state.user.authToken ) {
+          return state.user.authToken;
         }
-      },
-      {
-        name: 'GET_USERNAME',
-        fn: ( state ) => {
-          return state.username ? state.username : db.getDataPromise( 'username' );
-        }
-      },
-      {
-        name: 'GET_AUTH_TOKEN',
-        fn: async ( state ) => {
-          if ( state.authToken ) {
-            return state.authToken;
-          }
-          let authToken = await db.getDataPromise( 'authToken' );
-          return authToken ? JSON.parse( authToken ) : null;
-        }
-      }
+        let authToken = await db.getDataPromise( 'authToken' );
+        return authToken ? JSON.parse( authToken ) : null;
+      }, },
     ];
     let mutations = [
-      {
-        name: 'SET_SECRET',
-        fn: async ( state, secret ) => {
-          state.secret = secret;
-          await db.setDataPromise( 'secret', secret );
-        }
-      },
-      {
-        name: 'SET_USERNAME',
-        fn: async ( state, username ) => {
-          state.username = username;
-          await db.setDataPromise( 'username', username );
-        }
-      },
-      {
-        name: 'SET_AUTH_TOKEN',
-        fn: async ( state, authToken ) => {
-          state.authToken = authToken;
-          await db.setDataPromise( 'authToken', JSON.stringify( authToken ) );
-        }
-      },
+      { name: 'SET_SECRET', fn: async ( state, secret ) => {
+        state.user.secret = secret;
+        await db.setDataPromise( 'secret', secret );
+      }, },
+      { name: 'SET_USERNAME', fn: async ( state, username ) => {
+        state.user.username = username;
+        await db.setDataPromise( 'username', username );
+      }, },
+      { name: 'SET_AUTH_TOKEN', fn: async ( state, authToken ) => {
+        state.user.authToken = authToken;
+        await db.setDataPromise( 'authToken', JSON.stringify(authToken) );
+      }, },
 
-      {
-        name: 'RESET_STATE',
-        fn: async ( state, defaultState ) => {
+      { name: 'RESET_STATE', fn: async ( state, defaultState ) => {
           console.log( 'User::resetState() - Mutating user state...' );
           await db.deleteDataPromise( 'username' );
           await db.deleteDataPromise( 'secret' );
-          Object.assign( state, defaultState );
-        }
-      }
+          Object.assign( state.user, defaultState );
+      }, },
     ];
 
-
-    // Override state
-    KnishIOVuexModel.overrideState( module, User.defaultState() );
-
     // Fill all vuex data
-    return KnishIOVuexModel.fillVuexStorage( module, User.vuexFields(), getters, mutations );
+    return KnishIOVuexModel.fillVuexStorage( module, 'user', User.vuexFields(), User.defaultState(), getters, mutations );
   }
 
   /**
-   * Create a user instance
+   * Create new user instance
    *
    * @param store
    * @param client
    * @param vm
-   * @returns {null}
+   * @param salt
+   * @returns {User}
    */
-  static instance ( store, client, vm ) {
+  static instance( store, client, vm, salt ) {
     if ( !User._instance ) {
-      User._instance = new User( store, client, vm );
+      User._instance = new User( store, client, vm, salt );
     }
     return User._instance;
   }
 
   /**
    *
-   * @param {KnishIOVuexModel} storage
+   * @param storage
    * @param client
    * @param vm
-   * @param {string} salt
+   * @param salt
    */
   constructor ( storage, client, vm, salt ) {
     this.$__storage = storage; // KnishIOVuexModel
@@ -208,57 +133,55 @@ export default class User {
 
     this.$__salt = salt;
 
+    // Create an empty event listener
+    this.$__listener = new ModelEventListener( true );
+
     // Create a user wallets model to operate with user wallets (import / reset)
     this.wallets = new UserWallets( UserWallets.vuexModel, vm );
   }
 
 
   /**
-   * Set any field (vuex OR attribute)
-   *
-   * @param {string} field
-   * @param {*} value
-   * @returns {Promise<*>}
+   * Set any field (vuex OR attrbiute)
+   * @param field
+   * @param value
+   * @returns {Promise<void>}
    */
-  async set ( field, value ) {
+  async set( field, value ) {
     await this.$__storage.set( field, value );
   }
 
 
   /**
-   * Get any field (vuex OR attribute)
-   *
-   * @param {string} field
+   * Get any field (vuex OR attrbiute)
+   * @param field
    * @returns {*}
    */
-  get ( field ) {
+  get( field ) {
     return this.$__storage.get( field );
   }
 
 
   /**
    * Init
-   * @param {string|null} newSecret
-   * @param {string|null} username
-   * @param {string|null} uriRefhash
-   * @returns {Promise<*>}
+   * @param newSecret
+   * @param username
+   * @returns {Promise<void>}
    */
-  async init ( {
-    newSecret = null,
-    username = null,
-    uriRefhash = null
-  } ) {
+  async init( { newSecret = null, username = null, } ) {
     console.log( 'User::init() - Beginning bootstrap procedure...' );
+
 
     // Generating / recovering user's secret
     let secret;
     if ( newSecret ) {
       secret = newSecret;
-    } else {
+    }
+    else {
       secret = await this.$__storage.getVuexAsync( 'secret' );
     }
     // !!! Set the secret for update a local state to set related computed up to date
-    await this.$__store.commit( 'user/SET_SECRET', secret );
+    await this.$__storage.setVuex( 'secret', secret );
 
     // Save username
     if ( username ) {
@@ -266,7 +189,7 @@ export default class User {
     }
 
     // User authorization
-    await this.authorize( { newSecret } );
+    await this.authorize( { newSecret, } );
 
     // Has a secret on the client?
     if ( this.$__client.hasSecret() ) {
@@ -280,6 +203,9 @@ export default class User {
 
     }
 
+    // On user init
+    await this.$__listener.on( 'init', this, db );
+
     await this.set( 'initialized', true );
     console.log( 'User::init() - Bootstrap complete...' );
   }
@@ -290,7 +216,7 @@ export default class User {
    *
    * @returns {Promise<void>}
    */
-  async restore () {
+  async restore() {
     console.log( 'User::restore() - Beginning remote restore...' );
 
     // Get a user's bundle
@@ -318,7 +244,7 @@ export default class User {
    *
    * @returns {Promise<void>}
    */
-  async restoreWallets () {
+  async restoreWallets() {
 
     // Importing recovered wallets
     console.log( 'User::restoreWallets() - Restoring remote wallets...' );
@@ -333,16 +259,16 @@ export default class User {
 
   /**
    *
-   * @param {object} bundle
+   * @param bundle
    * @returns {Promise<void>}
    */
-  async restoreData ( bundle ) {
+  async restoreData( bundle ) {
 
     // Init user data
     let data = {
       bundle: bundle.bundleHash,
       createdAt: Number( bundle.createdAt ),
-      metas: bundle.metas
+      metas: bundle.metas,
     };
 
     // Init old data to get a cover value
@@ -377,11 +303,10 @@ export default class User {
 
   /**
    *
-   * @param {string} newSecret
+   * @param newSecret
    * @returns {Promise<void>}
    */
-  async authorize ( { newSecret } ) {
-
+  async authorize( { newSecret, }, ) {
     console.log( 'User::authorize() - Starting authorization process...' );
 
     // Has a new secret: saving secret locally & update it on KnishIOClient
@@ -393,30 +318,37 @@ export default class User {
     // Get stored secret & set it to the KnishIOClient
     console.log( 'User::authorize() - Retrieving user identity...' );
     let secret = await this.$__storage.getVuexAsync( 'secret' );
-    // await this.$__store.getters[ `${ this.$__prefix}/GET_SECRET` ];
     if ( secret ) {
       this.$__client.setSecret( secret );
     }
 
     // Auth token default initialization
-    let authToken = await this.$__storage.getVuex( 'auth_token' );
-    // await this.$__store.getters[ `${ this.$__prefix}/GET_AUTH_TOKEN` ];
-    console.log( `User::authorize() - Retrieving auth token ${ authToken ? authToken.token : 'NONE' }...` );
+    let authTokenData = await this.$__storage.getVuexAsync( 'auth_token' );
+
+    // Has a stored auth token data - restore an authToken object from it
+    let authTokenObject = null;
+    if ( authTokenData ) {
+      authTokenObject = AuthToken.restore( authTokenData, secret );
+    }
+    console.log( `User::authorize() - Retrieving auth token ${ authTokenObject ? authTokenObject.getToken() : 'NONE' }...` );
+
 
     // Try to get a new auth token
-    if ( newSecret || !authToken || !authToken.expiresAt || authToken.expiresAt * 1000 < Date.now() ) {
-      authToken = await this.$__client.authorize( {
-        secret
-      } );
-      console.log( `User::authorize() - Get a new auth token ${ authToken.token }...` );
+    if ( newSecret || !authTokenObject || authTokenObject.isExpired() ) {
+
+      // Get a new auth token
+      authTokenObject = await this.$__client.authorize({
+        secret,
+      });
+      console.log( `User::authorize() - Get a new auth token ${ authTokenObject.getToken() }...` );
 
       // Save authToken & set some refresh code
-      await this.$__storage.setVuex( 'auth_token', authToken );
-      // await this.$__store.commit( `${ this.$__prefix}/SET_AUTH_TOKEN`, authToken );
+      await this.set( 'auth_token', authTokenObject.getSnapshot() );
     }
 
     // Set an auth token to the KnishIOClient
-    this.$__client.setAuthToken( authToken );
+    this.$__client.setAuthToken( authTokenObject );
+
 
 
     // Remove previous timeout for the auth token update
@@ -424,33 +356,28 @@ export default class User {
     clearTimeout( authTimeout );
 
     // Create a new auth token timeouts
-    console.log( `User::authorize() - Set auth timeout to ${ new Date( authToken.expiresAt * 1000 ) } ...` );
+    console.log( `User::authorize() - Set auth timeout interval to ${ Math.floor( authTokenObject.getExpireInterval() / 1000 ) } seconds...` );
     let self = this;
     authTimeout = setTimeout( self => {
       ( async self => {
-        await self.authorize( { newSecret } );
+        await self.authorize( { newSecret, } );
       } )( self );
-    }, ( authToken.expiresAt * 1000 ) - Date.now(), self );
+    }, authTokenObject.getExpireInterval(), self );
+
     // Save auth timeout
     await this.set( 'auth_timeout', authTimeout );
-
-
   }
 
 
   /**
    * Attempts to log in the user by hashing a new secret and retrieving the user's data
    *
-   * @param {string} username
-   * @param {string} password
-   * @param {string} secret
+   * @param username
+   * @param password
+   * @param secret
    * @returns {Promise<void>}
    */
-  async login ( {
-    username,
-    password,
-    secret
-  } ) {
+  async login ( { username, password, secret, } ) {
 
     console.log( 'User::login() - Starting login process...' );
 
@@ -466,7 +393,7 @@ export default class User {
 
     // Attempting to retrieve user's metadata for the given secret
     const result = await this.$__client.queryBundle( {
-      bundle
+      bundle,
     } );
 
     if ( result ) {
@@ -483,16 +410,10 @@ export default class User {
     if ( result && result[ bundle ] && Object.keys( result[ bundle ].metas ).length > 0 ) {
 
       console.log( 'User::login() - Logging in...' );
-      await this.init( {
-        newSecret: secret,
-        username
-      } );
+      await this.init( { newSecret: secret, username, } );
 
-      // Delete refhash when user logged in
-      let refhash = await db.getDataPromise( 'refhash' );
-      if ( refhash ) {
-        await db.deleteDataPromise( 'refhash' );
-      }
+      // On login success
+      await this.$__listener.on( 'loginSuccess', this, db );
 
     } else {
 
@@ -506,14 +427,11 @@ export default class User {
   /**
    * Validates the registration state of the user to ensure there is no duplicate
    *
-   * @param {string} username
-   * @param {string} password
+   * @param username
+   * @param password
    * @returns {Promise<void>}
    */
-  async register ( {
-    username,
-    password
-  } ) {
+  async register ( { username, password, } ) {
 
     console.log( 'User::register() - Starting registration process...' );
 
@@ -529,7 +447,7 @@ export default class User {
 
     // Attempting to retrieve user's metadata for the given secret
     const result = await this.$__client.queryBundle( {
-      bundle
+      bundle,
     } );
 
     if ( result ) {
@@ -551,10 +469,7 @@ export default class User {
     } else {
 
       console.log( 'User::register() - User not registered; Registration can proceed...' );
-      await this.init( {
-        newSecret,
-        username
-      } );
+      await this.init( { newSecret, username, } );
 
     }
   }
@@ -573,7 +488,6 @@ export default class User {
     await this.set( 'secret', false );
     await this.set( 'username', false );
     await this.set( 'bundle', false );
-    await this.set( 'user_roles', {} );
 
     await this.set( 'auth_token', false );
 
@@ -591,7 +505,7 @@ export default class User {
    *
    * @param apolloClient
    * @param gqlQuery
-   * @param {string} masterToken
+   * @param masterToken
    * @returns {Promise<void>}
    */
   async subscribeWalletBalance ( apolloClient, gqlQuery, masterToken ) {
@@ -599,7 +513,6 @@ export default class User {
     console.log( 'User::update() - Subscribe wallet balance...' );
 
     let wallets = await this.wallets.getWallets();
-    // let wallets = await this.$__store.rootGetters[ 'wallet/GET_WALLETS' ]();
 
     for ( let token in wallets ) {
       if ( token === masterToken ) {
@@ -613,9 +526,9 @@ export default class User {
         query: gqlQuery,
         variables: {
           'bundle': wallet.bundle,
-          'token': wallet.token
+          'token': wallet.token,
         },
-        fetchPolicy: 'no-cache'
+        fetchPolicy: 'no-cache',
       } );
 
       observer.subscribe( {
@@ -630,7 +543,7 @@ export default class User {
         },
         error ( error ) {
           console.log( error );
-        }
+        },
       } );
     }
   }
@@ -640,7 +553,7 @@ export default class User {
    *
    * @param apolloClient
    * @param gqlQuery
-   * @param {string} masterToken
+   * @param masterToken
    * @returns {Promise<void>}
    */
   async subscribeActiveWallet ( apolloClient, gqlQuery, masterToken ) {
@@ -656,12 +569,11 @@ export default class User {
 
       let wallet = wallets[ token ];
       let self = this;
-      // let vm = this.$__vm;
 
       const observer = apolloClient.subscribe( {
         query: gqlQuery,
-        variables: { 'bundle': wallet.bundle },
-        fetchPolicy: 'no-cache'
+        variables: { 'bundle': wallet.bundle, },
+        fetchPolicy: 'no-cache',
       } );
 
       observer.subscribe( {
@@ -680,7 +592,7 @@ export default class User {
         },
         error ( error ) {
           console.log( error );
-        }
+        },
       } );
     }
   }
