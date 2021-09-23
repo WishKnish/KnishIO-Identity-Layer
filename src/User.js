@@ -337,9 +337,11 @@ export default class User {
     if ( newSecret || !authTokenObject || authTokenObject.isExpired() ) {
 
       // Get a new auth token
-      authTokenObject = await this.$__client.authorize({
+      await this.$__client.requestAuthToken({
         secret,
       });
+      // Get an authToken from the client
+      authTokenObject = this.$__client.getAuthToken();
       console.log( `User::authorize() - Get a new auth token ${ authTokenObject.getToken() }...` );
 
       // Save authToken & set some refresh code
